@@ -236,9 +236,8 @@ public class Form2GeneratorService {
                 if (trimmed.matches("(?i)^stage\\s*\\d+.*") || trimmed.matches("^[0-9]+\\..*")) {
                     if (currentStage != null && currentStage.length() > 0) {
                         stages.add(currentStage.toString().trim());
-                        currentStage = new StringBuilder();
                     }
-                    currentStage.append(trimmed);
+                    currentStage = new StringBuilder(trimmed);
                 } else if (!trimmed.isEmpty()) {
                     if (currentStage == null) currentStage = new StringBuilder();
                     if (currentStage.length() > 0) currentStage.append("\n");
