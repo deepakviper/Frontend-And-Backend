@@ -8,7 +8,24 @@ import PrincipalDetailsCard from './components/PrincipalDetailsCard';
 import InventorsCard from './components/InventorsCard';
 
 function App() {
-  // Track parsed patent data (initialized with default metadata to allow downloads instantly)
+  // Unified single source of truth for all form inputs
+  const [formData, setFormData] = useState({
+    collegeName: '',
+    houseNo: '',
+    street: '',
+    city: '',
+    state: '',
+    country: '',
+    pincode: '',
+    principalName: '',
+    telephone: '',
+    mobile: '',
+    fax: '',
+    email: '',
+    inventors: ['', '', '']
+  });
+
+  // Track parsed patent data from document upload
   const [parsedData, setParsedData] = useState({
     applicant: {
       name: '',
@@ -32,33 +49,87 @@ function App() {
     },
     inventors: []
   });
+
   const [isDownloading, setIsDownloading] = useState(false);
-  // Track which forms are selected in the right column
   const [selectedForms, setSelectedForms] = useState([]);
-  // Track the raw source file for Form 2 generation
   const [sourceFile, setSourceFile] = useState(null);
-  // Track user login information (initialized to bypass login page)
-  const [user, setUser] = useState({
-    name: '',
-    email: '',
-    additionalMembers: [],
-    principal: {
-      name: '',
-      designation: 'Principal',
-      telephone: '',
-      mobile: '',
-      fax: '',
-      email: ''
-    },
-    address: {
-      houseNo: '',
-      street: '',
-      city: '',
-      state: '',
-      country: '',
-      pincode: ''
-    }
-  });
+
+  // Sync form inputs into parsedData for document generation
+  const syncParsedData = (currentFormData, baseParsedData) => {
+    const activeInventors = (currentFormData.inventors || [])
+      .filter(name => name && name.trim() !== '')
+      .map(name => ({
+        name: name.trim(),
+        nationality: 'Indian',
+        country: 'India'
+      }));
+
+    setParsedData(prev => ({
+      ...(baseParsedData || prev || {}),
+      applicant: {
+        ...(baseParsedData?.applicant || prev?.applicant || {}),
+        name: currentFormData.collegeName || baseParsedData?.applicant?.name || '',
+        email: currentFormData.email || baseParsedData?.applicant?.email || '',
+        address: {
+          ...(baseParsedData?.applicant?.address || prev?.applicant?.address || {}),
+          houseNo: currentFormData.houseNo || '',
+          street: currentFormData.street || baseParsedData?.applicant?.address?.street || '',
+          city: currentFormData.city || baseParsedData?.applicant?.address?.city || '',
+          state: currentFormData.state || baseParsedData?.applicant?.address?.state || '',
+          country: currentFormData.country || baseParsedData?.applicant?.address?.country || '',
+          pincode: currentFormData.pincode || baseParsedData?.applicant?.address?.pincode || ''
+        }
+      },
+      principal: {
+        name: currentFormData.principalName || '',
+        designation: 'Principal',
+        telephone: currentFormData.telephone || '',
+        mobile: currentFormData.mobile || '',
+        fax: currentFormData.fax || '',
+        email: currentFormData.email || ''
+      },
+      inventors: activeInventors
+    }));
+  };
+
+  const handleFormFieldChange = (fieldName, value) => {
+    setFormData(prev => {
+      const updated = { ...prev, [fieldName]: value };
+      syncParsedData(updated, parsedData);
+      return updated;
+    });
+  };
+
+  const handleInventorChange = (index, value) => {
+    setFormData(prev => {
+      const updatedInventors = [...prev.inventors];
+      updatedInventors[index] = value;
+      const updated = { ...prev, inventors: updatedInventors };
+      syncParsedData(updated, parsedData);
+      return updated;
+    });
+  };
+
+  const handleAddInventor = () => {
+    setFormData(prev => {
+      if (prev.inventors.length >= 8) return prev;
+      const updated = { ...prev, inventors: [...prev.inventors, ''] };
+      syncParsedData(updated, parsedData);
+      return updated;
+    });
+  };
+
+  const handleRemoveInventor = (index) => {
+    setFormData(prev => {
+      let updatedInventors = prev.inventors.filter((_, idx) => idx !== index);
+      while (updatedInventors.length < 3) {
+        updatedInventors.push('');
+      }
+      const updated = { ...prev, inventors: updatedInventors };
+      syncParsedData(updated, parsedData);
+      return updated;
+    });
+  };
 
   // --- DOWNLOAD ACTION ---
   const handleDownloadDocx = async () => {
@@ -69,7 +140,6 @@ function App() {
       return;
     }
 
-    // Includes form9 and form28 inside the execution lifecycle configuration
     const validForms = ['form1', 'form2', 'form3', 'form5', 'form9', 'form28'];
     const unsupportedSelected = selectedForms.filter(form => !validForms.includes(form));
     
@@ -81,18 +151,17 @@ function App() {
     setIsDownloading(true);
 
     try {
-      // Loop strictly through checked items only
       for (const formKey of selectedForms) {
-        const formData = new FormData();
-        formData.append('data', JSON.stringify(parsedData));
+        const payloadData = new FormData();
+        payloadData.append('data', JSON.stringify(parsedData));
         if (sourceFile) {
-          formData.append('sourceFile', sourceFile);
+          payloadData.append('sourceFile', sourceFile);
         }
         
         const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
         const response = await fetch(`${baseUrl}/api/patent/download?formType=${formKey}`, {
           method: 'POST',
-          body: formData,
+          body: payloadData,
         });
 
         if (!response.ok) {
@@ -104,7 +173,6 @@ function App() {
         const link = document.createElement('a');
         link.href = downloadUrl;
         
-        // Dynamically assign names based on the formType checked
         let displayFormName = 'Form_1_Application';
         if (formKey === 'form2') {
           displayFormName = 'Form_2_Specification';
@@ -135,48 +203,29 @@ function App() {
 
   const handleResetWorkspace = () => {
     setSourceFile(null);
-    setUser({
-      name: '',
+    const cleanForm = {
+      collegeName: '',
+      houseNo: '',
+      street: '',
+      city: '',
+      state: '',
+      country: '',
+      pincode: '',
+      principalName: '',
+      telephone: '',
+      mobile: '',
+      fax: '',
       email: '',
-      additionalMembers: [],
-      principal: {
-        name: '',
-        designation: 'Principal',
-        telephone: '',
-        mobile: '',
-        fax: '',
-        email: ''
-      },
-      address: {
-        houseNo: '',
-        street: '',
-        city: '',
-        state: '',
-        country: '',
-        pincode: ''
-      }
-    });
+      inventors: ['', '', '']
+    };
+    setFormData(cleanForm);
     setParsedData({
       applicant: {
         name: '',
         email: '',
-        address: {
-          houseNo: '',
-          street: '',
-          city: '',
-          state: '',
-          country: '',
-          pincode: ''
-        }
+        address: { houseNo: '', street: '', city: '', state: '', country: '', pincode: '' }
       },
-      principal: {
-        name: '',
-        designation: 'Principal',
-        telephone: '',
-        mobile: '',
-        fax: '',
-        email: ''
-      },
+      principal: { name: '', designation: 'Principal', telephone: '', mobile: '', fax: '', email: '' },
       inventors: []
     });
     setSelectedForms([]);
@@ -187,110 +236,46 @@ function App() {
       setSourceFile(file);
     }
 
-    const extractedPrincipal = data?.principal || {};
-    const currentPrincipal = {
-      name: user?.principal?.name || extractedPrincipal.name || '',
-      designation: user?.principal?.designation || extractedPrincipal.designation || 'Principal',
-      telephone: user?.principal?.telephone || extractedPrincipal.telephone || '',
-      mobile: user?.principal?.mobile || extractedPrincipal.mobile || '',
-      fax: user?.principal?.fax || extractedPrincipal.fax || '',
-      email: user?.principal?.email || extractedPrincipal.email || ''
-    };
-
     if (data) {
       const parsedAddress = data.applicant?.address || {};
-
-      setUser(prevUser => {
-        const updatedAddress = {
-          ...prevUser.address,
-          street: prevUser.address.street || parsedAddress.street || '',
-          city: prevUser.address.city || parsedAddress.city || '',
-          state: prevUser.address.state || parsedAddress.state || '',
-          country: prevUser.address.country || parsedAddress.country || '',
-          pincode: prevUser.address.pincode || parsedAddress.pincode || ''
+      setFormData(prev => {
+        // Pre-fill extracted data ONLY for fields that are currently blank
+        const updated = {
+          ...prev,
+          collegeName: prev.collegeName || data.applicant?.name || '',
+          street: prev.street || parsedAddress.street || '',
+          city: prev.city || parsedAddress.city || '',
+          state: prev.state || parsedAddress.state || '',
+          country: prev.country || parsedAddress.country || '',
+          pincode: prev.pincode || parsedAddress.pincode || '',
+          principalName: prev.principalName || data.principal?.name || ''
         };
-        return {
-          ...prevUser,
-          address: updatedAddress,
-          principal: currentPrincipal
-        };
-      });
-
-      // Merge: strictly use user's form inputs for applicant & inventors.
-      // Other details (Title, Abstract, Claims, Description, Attachments) come from the parsed document.
-      const mergedData = {
-        ...data,
-        applicant: {
-          ...data.applicant,
-          name: user?.name || data.applicant?.name || '',
-          email: user?.email || data.applicant?.email || '',
-          address: {
-            ...data.applicant?.address,
-            houseNo: user?.address?.houseNo || '',
-            street: user?.address?.street || data.applicant?.address?.street || '',
-            city: user?.address?.city || data.applicant?.address?.city || '',
-            state: user?.address?.state || data.applicant?.address?.state || '',
-            country: user?.address?.country || data.applicant?.address?.country || '',
-            pincode: user?.address?.pincode || data.applicant?.address?.pincode || ''
-          }
-        },
-        principal: currentPrincipal,
-        inventors: (user?.additionalMembers || []).map(m => ({
-          name: m.name,
-          nationality: 'Indian',
-          country: 'India'
-        }))
-      };
-      setParsedData(mergedData);
-    } else {
-      // No file uploaded: keep form inputs structure
-      setParsedData({
-        applicant: {
-          name: user?.name || '',
-          email: user?.email || '',
-          address: {
-            houseNo: user?.address?.houseNo || '',
-            street: user?.address?.street || '',
-            city: user?.address?.city || '',
-            state: user?.address?.state || '',
-            country: user?.address?.country || '',
-            pincode: user?.address?.pincode || ''
-          }
-        },
-        principal: currentPrincipal,
-        inventors: (user?.additionalMembers || []).map(m => ({
-          name: m.name,
-          nationality: 'Indian',
-          country: 'India'
-        }))
+        syncParsedData(updated, data);
+        return updated;
       });
     }
   };
 
   return (
     <div>
-      <Header user={user} onLogout={handleResetWorkspace} />
+      <Header user={{ name: formData.collegeName, email: formData.email }} onLogout={handleResetWorkspace} />
       <div className="main-container">
         <div className="column-card-container col-1">
           <AdditionalDetailsCard
-            previewData={parsedData}
-            onChange={handleDataParsed}
-            user={user}
-            onUserUpdate={setUser}
+            formData={formData}
+            onChange={handleFormFieldChange}
           />
         </div>
         <div className="column-card-container col-2" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <PrincipalDetailsCard
-            previewData={parsedData}
-            onChange={handleDataParsed}
-            user={user}
-            onUserUpdate={setUser}
+            formData={formData}
+            onChange={handleFormFieldChange}
           />
           <InventorsCard
-            previewData={parsedData}
-            onChange={handleDataParsed}
-            user={user}
-            onUserUpdate={setUser}
+            formData={formData}
+            onInventorChange={handleInventorChange}
+            onAddInventor={handleAddInventor}
+            onRemoveInventor={handleRemoveInventor}
           />
         </div>
         <div className="column-card-container col-3" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>

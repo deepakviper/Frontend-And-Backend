@@ -1,102 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import { Users, Plus } from 'lucide-react';
 
-function InventorsCard({ previewData, onChange, user, onUserUpdate }) {
-  const [coApplicants, setCoApplicants] = useState([]);
-  const isSelfTriggeredRef = useRef(false);
+function InventorsCard({ formData, onInventorChange, onAddInventor, onRemoveInventor }) {
   const listEndRef = useRef(null);
+  const inventors = formData?.inventors || ['', '', ''];
 
-  useEffect(() => {
-    if (isSelfTriggeredRef.current) {
-      isSelfTriggeredRef.current = false;
-      return;
-    }
-
-    const members = user?.additionalMembers || [];
-    const padded = [...members];
-    while (padded.length < 3) {
-      padded.push({ name: '' });
-    }
-    setCoApplicants(padded);
-  }, [user]);
-
-  const syncChanges = (updatedMembers) => {
-    const activeMembers = updatedMembers.filter(m => m && m.name && m.name.trim() !== '');
-
-    const updatedUser = {
-      ...user,
-      extraPersonsCount: activeMembers.length,
-      additionalMembers: updatedMembers
-    };
-
-    let updatedData = null;
-    if (previewData) {
-      updatedData = {
-        ...previewData,
-        inventors: activeMembers.map(m => ({
-          name: m.name,
-          nationality: 'Indian',
-          country: 'India'
-        }))
-      };
-    } else {
-      updatedData = {
-        applicant: {
-          name: user?.name || '',
-          email: user?.email || '',
-          address: user?.address || {}
-        },
-        inventors: activeMembers.map(m => ({
-          name: m.name,
-          nationality: 'Indian',
-          country: 'India'
-        }))
-      };
-    }
-
-    if (user && onUserUpdate) {
-      onUserUpdate(updatedUser);
-    }
-    if (onChange) {
-      onChange(updatedData);
-    }
-  };
-
-  const handleAddMember = () => {
-    isSelfTriggeredRef.current = true;
-    if (coApplicants.length >= 8) {
+  const handleAdd = () => {
+    if (inventors.length >= 8) {
       alert("You can add up to 8 inventors.");
       return;
     }
-    const newCoApplicants = [...coApplicants, { name: '' }];
-    setCoApplicants(newCoApplicants);
-    syncChanges(newCoApplicants);
-
+    onAddInventor();
     setTimeout(() => {
       listEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }, 100);
-  };
-
-  const handleRemoveMember = (index) => {
-    isSelfTriggeredRef.current = true;
-    let newCoApplicants = coApplicants.filter((_, idx) => idx !== index);
-    while (newCoApplicants.length < 3) {
-      newCoApplicants.push({ name: '' });
-    }
-    setCoApplicants(newCoApplicants);
-    syncChanges(newCoApplicants);
-  };
-
-  const handleMemberChange = (index, value) => {
-    isSelfTriggeredRef.current = true;
-    const newCoApplicants = coApplicants.map((member, idx) => {
-      if (idx === index) {
-        return { name: value };
-      }
-      return member;
-    });
-    setCoApplicants(newCoApplicants);
-    syncChanges(newCoApplicants);
   };
 
   return (
@@ -108,7 +25,7 @@ function InventorsCard({ previewData, onChange, user, onUserUpdate }) {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1, overflowY: 'auto', paddingRight: '4px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {coApplicants.map((member, index) => {
+          {inventors.map((name, index) => {
             const isAdditional = index >= 3;
             return (
               <div 
@@ -123,12 +40,12 @@ function InventorsCard({ previewData, onChange, user, onUserUpdate }) {
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <label className="form-label" htmlFor={`member-name-${index}`} style={{ fontSize: '12px', color: '#4B5563', fontWeight: '600' }}>
-                    Inventor #{index + 1} {index === 0 ? '*' : isAdditional ? '' : '(Optional)'}
+                    Inventor #{index + 1} {index === 0 ? '' : isAdditional ? '' : '(Optional)'}
                   </label>
                   {isAdditional && (
                     <button
                       type="button"
-                      onClick={() => handleRemoveMember(index)}
+                      onClick={() => onRemoveInventor(index)}
                       style={{
                         background: 'transparent',
                         color: '#EF4444',
@@ -161,9 +78,8 @@ function InventorsCard({ previewData, onChange, user, onUserUpdate }) {
                     width: '100%'
                   }}
                   placeholder={`Enter inventor #${index + 1} name`}
-                  value={member.name || ''}
-                  onChange={(e) => handleMemberChange(index, e.target.value)}
-                  required={index === 0}
+                  value={name || ''}
+                  onChange={(e) => onInventorChange(index, e.target.value)}
                 />
               </div>
             );
@@ -171,10 +87,10 @@ function InventorsCard({ previewData, onChange, user, onUserUpdate }) {
           <div ref={listEndRef} />
         </div>
 
-        {coApplicants.length < 8 && (
+        {inventors.length < 8 && (
           <button
             type="button"
-            onClick={handleAddMember}
+            onClick={handleAdd}
             style={{
               background: '#0052cc',
               color: '#FFF',

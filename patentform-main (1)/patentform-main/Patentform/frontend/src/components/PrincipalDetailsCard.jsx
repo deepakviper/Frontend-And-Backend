@@ -1,92 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { Phone, User } from 'lucide-react';
 
-function PrincipalDetailsCard({ previewData, onChange, user, onUserUpdate }) {
-  const [principalName, setPrincipalName] = useState('');
-  const [telephone, setTelephone] = useState('');
-  const [mobile, setMobile] = useState('');
-  const [fax, setFax] = useState('');
-  const [email, setEmail] = useState('');
-
-  const isSelfTriggeredRef = useRef(false);
-
-  useEffect(() => {
-    if (isSelfTriggeredRef.current) {
-      isSelfTriggeredRef.current = false;
-      return;
-    }
-
-    const p = user?.principal || {};
-    setPrincipalName(p.name || '');
-    setTelephone(p.telephone || '');
-    setMobile(p.mobile || '');
-    setFax(p.fax || '');
-    setEmail(p.email || '');
-  }, [user]);
-
-  const syncChanges = (updatedFields) => {
-    isSelfTriggeredRef.current = true;
-
-    const newPrincipalName = updatedFields.hasOwnProperty('principalName') ? updatedFields.principalName : principalName;
-    const newTelephone = updatedFields.hasOwnProperty('telephone') ? updatedFields.telephone : telephone;
-    const newMobile = updatedFields.hasOwnProperty('mobile') ? updatedFields.mobile : mobile;
-    const newFax = updatedFields.hasOwnProperty('fax') ? updatedFields.fax : fax;
-    const newEmail = updatedFields.hasOwnProperty('email') ? updatedFields.email : email;
-
-    const updatedPrincipal = {
-      name: newPrincipalName,
-      designation: user?.principal?.designation || 'Principal',
-      telephone: newTelephone,
-      mobile: newMobile,
-      fax: newFax,
-      email: newEmail
-    };
-
-    const updatedUser = {
-      ...user,
-      principal: updatedPrincipal
-    };
-
-    let updatedData = null;
-    if (previewData) {
-      updatedData = {
-        ...previewData,
-        principal: updatedPrincipal
-      };
-    } else {
-      updatedData = {
-        applicant: {
-          name: user?.name || '',
-          email: user?.email || '',
-          address: user?.address || {}
-        },
-        principal: updatedPrincipal,
-        inventors: (user?.additionalMembers || []).map(m => ({
-          name: m.name,
-          nationality: 'Indian',
-          country: 'India'
-        }))
-      };
-    }
-
-    if (user && onUserUpdate) {
-      onUserUpdate(updatedUser);
-    }
-    if (onChange) {
-      onChange(updatedData);
-    }
-  };
-
-  const handleFieldChange = (fieldName, val) => {
-    if (fieldName === 'principalName') setPrincipalName(val);
-    else if (fieldName === 'telephone') setTelephone(val);
-    else if (fieldName === 'mobile') setMobile(val);
-    else if (fieldName === 'fax') setFax(val);
-    else if (fieldName === 'email') setEmail(val);
-
-    syncChanges({ [fieldName]: val });
-  };
-
+function PrincipalDetailsCard({ formData, onChange }) {
   const inputStyle = {
     background: '#F9FAFB',
     border: '1px solid #D1D5DB',
@@ -118,7 +33,7 @@ function PrincipalDetailsCard({ previewData, onChange, user, onUserUpdate }) {
         
         {/* Principal Name */}
         <div className="form-group">
-          <label style={labelStyle} htmlFor="addr-principalName">Principal Name *</label>
+          <label style={labelStyle} htmlFor="addr-principalName">Principal Name</label>
           <div className="input-container">
             <User className="input-icon" style={{ color: '#9CA3AF' }} size={16} />
             <input
@@ -130,9 +45,8 @@ function PrincipalDetailsCard({ previewData, onChange, user, onUserUpdate }) {
                 paddingLeft: '38px'
               }}
               placeholder="Enter principal name"
-              value={principalName}
-              onChange={(e) => handleFieldChange('principalName', e.target.value)}
-              required
+              value={formData?.principalName || ''}
+              onChange={(e) => onChange('principalName', e.target.value)}
             />
           </div>
         </div>
@@ -142,12 +56,12 @@ function PrincipalDetailsCard({ previewData, onChange, user, onUserUpdate }) {
           <label style={labelStyle} htmlFor="addr-telephone">Telephone No.</label>
           <input
             id="addr-telephone"
-            type="tel"
+            type="text"
             className="login-input"
             style={inputStyle}
             placeholder="Enter telephone number"
-            value={telephone}
-            onChange={(e) => handleFieldChange('telephone', e.target.value)}
+            value={formData?.telephone || ''}
+            onChange={(e) => onChange('telephone', e.target.value)}
           />
         </div>
 
@@ -156,12 +70,12 @@ function PrincipalDetailsCard({ previewData, onChange, user, onUserUpdate }) {
           <label style={labelStyle} htmlFor="addr-mobile">Mobile No.</label>
           <input
             id="addr-mobile"
-            type="tel"
+            type="text"
             className="login-input"
             style={inputStyle}
             placeholder="Enter mobile number"
-            value={mobile}
-            onChange={(e) => handleFieldChange('mobile', e.target.value)}
+            value={formData?.mobile || ''}
+            onChange={(e) => onChange('mobile', e.target.value)}
           />
         </div>
 
@@ -174,8 +88,8 @@ function PrincipalDetailsCard({ previewData, onChange, user, onUserUpdate }) {
             className="login-input"
             style={inputStyle}
             placeholder="Enter fax number"
-            value={fax}
-            onChange={(e) => handleFieldChange('fax', e.target.value)}
+            value={formData?.fax || ''}
+            onChange={(e) => onChange('fax', e.target.value)}
           />
         </div>
 
@@ -184,12 +98,12 @@ function PrincipalDetailsCard({ previewData, onChange, user, onUserUpdate }) {
           <label style={labelStyle} htmlFor="addr-email">Email ID</label>
           <input
             id="addr-email"
-            type="email"
+            type="text"
             className="login-input"
             style={inputStyle}
             placeholder="Enter email ID"
-            value={email}
-            onChange={(e) => handleFieldChange('email', e.target.value)}
+            value={formData?.email || ''}
+            onChange={(e) => onChange('email', e.target.value)}
           />
         </div>
 

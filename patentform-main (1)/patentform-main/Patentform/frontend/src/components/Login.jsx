@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Mail, Users, ArrowRight } from 'lucide-react';
+import { User, Mail, ArrowRight } from 'lucide-react';
 
 function Login({ onLogin }) {
   const [name, setName] = useState('');
@@ -7,15 +7,6 @@ function Login({ onLogin }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!name.trim()) {
-      alert('Please enter your full name.');
-      return;
-    }
-    if (!email.trim() || !email.includes('@')) {
-      alert('Please enter a valid email address.');
-      return;
-    }
-
     onLogin({
       name: name.trim(),
       email: email.trim(),
@@ -43,7 +34,7 @@ function Login({ onLogin }) {
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
             <label className="form-label" htmlFor="applicant-name">
-              Full Name *
+              Full Name
             </label>
             <div className="input-container">
               <User className="input-icon" />
@@ -52,27 +43,25 @@ function Login({ onLogin }) {
                 type="text"
                 className="login-input"
                 placeholder="Enter applicant's full name"
-                value={name}
+                value={name || ''}
                 onChange={(e) => setName(e.target.value)}
-                required
               />
             </div>
           </div>
 
           <div className="form-group">
             <label className="form-label" htmlFor="applicant-email">
-              Email Address *
+              Email Address
             </label>
             <div className="input-container">
               <Mail className="input-icon" />
               <input
                 id="applicant-email"
-                type="email"
+                type="text"
                 className="login-input"
                 placeholder="Enter applicant's email address"
-                value={email}
+                value={email || ''}
                 onChange={(e) => setEmail(e.target.value)}
-                required
               />
             </div>
           </div>

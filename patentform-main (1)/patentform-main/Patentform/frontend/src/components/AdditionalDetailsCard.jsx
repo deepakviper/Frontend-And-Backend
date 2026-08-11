@@ -1,104 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { User, Sparkles } from 'lucide-react';
 
-function AdditionalDetailsCard({ previewData, onChange, user, onUserUpdate }) {
-  const [name, setName] = useState('');
-  const [houseNo, setHouseNo] = useState('');
-  const [street, setStreet] = useState('');
-  const [city, setCity] = useState('');
-  const [stateVal, setStateVal] = useState('');
-  const [country, setCountry] = useState('');
-  const [pincode, setPincode] = useState('');
-
-  const isSelfTriggeredRef = useRef(false);
-
-  useEffect(() => {
-    if (isSelfTriggeredRef.current) {
-      isSelfTriggeredRef.current = false;
-      return;
-    }
-
-    setName(user?.name || '');
-    const addr = user?.address || {};
-    setHouseNo(addr.houseNo || '');
-    setStreet(addr.street || '');
-    setCity(addr.city || '');
-    setStateVal(addr.state || '');
-    setCountry(addr.country || '');
-    setPincode(addr.pincode || '');
-  }, [user]);
-
-  const syncChanges = (updatedName, updatedFields) => {
-    isSelfTriggeredRef.current = true;
-
-    const mergedAddress = {
-      ...user?.address,
-      houseNo: updatedFields.hasOwnProperty('houseNo') ? updatedFields.houseNo : houseNo,
-      street: updatedFields.hasOwnProperty('street') ? updatedFields.street : street,
-      city: updatedFields.hasOwnProperty('city') ? updatedFields.city : city,
-      state: updatedFields.hasOwnProperty('state') ? updatedFields.state : stateVal,
-      country: updatedFields.hasOwnProperty('country') ? updatedFields.country : country,
-      pincode: updatedFields.hasOwnProperty('pincode') ? updatedFields.pincode : pincode,
-    };
-
-    const updatedUser = {
-      ...user,
-      name: updatedName,
-      address: mergedAddress
-    };
-
-    let updatedData = null;
-    if (previewData) {
-      updatedData = {
-        ...previewData,
-        applicant: {
-          ...previewData.applicant,
-          name: updatedName,
-          address: {
-            ...previewData.applicant?.address,
-            ...mergedAddress
-          }
-        }
-      };
-    } else {
-      updatedData = {
-        applicant: {
-          name: updatedName,
-          email: user?.email || '',
-          address: mergedAddress
-        },
-        inventors: (user?.additionalMembers || []).map(m => ({
-          name: m.name,
-          nationality: 'Indian',
-          country: 'India'
-        }))
-      };
-    }
-
-    if (user && onUserUpdate) {
-      onUserUpdate(updatedUser);
-    }
-    if (onChange) {
-      onChange(updatedData);
-    }
-  };
-
-  const handleNameChange = (val) => {
-    setName(val);
-    syncChanges(val, {});
-  };
-
-  const handleFieldChange = (fieldName, val) => {
-    if (fieldName === 'houseNo') setHouseNo(val);
-    else if (fieldName === 'street') setStreet(val);
-    else if (fieldName === 'city') setCity(val);
-    else if (fieldName === 'state') setStateVal(val);
-    else if (fieldName === 'country') setCountry(val);
-    else if (fieldName === 'pincode') setPincode(val);
-
-    syncChanges(name, { [fieldName]: val });
-  };
-
+function AdditionalDetailsCard({ formData, onChange }) {
   const inputStyle = {
     background: '#F9FAFB',
     border: '1px solid #D1D5DB',
@@ -130,7 +33,7 @@ function AdditionalDetailsCard({ previewData, onChange, user, onUserUpdate }) {
         {/* College Name */}
         <div className="form-group">
           <label style={labelStyle} htmlFor="details-name">
-            College Name *
+            College Name
           </label>
           <div className="input-container">
             <User className="input-icon" style={{ color: '#9CA3AF' }} size={16} />
@@ -143,9 +46,8 @@ function AdditionalDetailsCard({ previewData, onChange, user, onUserUpdate }) {
                 paddingLeft: '38px'
               }}
               placeholder="Enter college name"
-              value={name}
-              onChange={(e) => handleNameChange(e.target.value)}
-              required
+              value={formData?.collegeName || ''}
+              onChange={(e) => onChange('collegeName', e.target.value)}
             />
           </div>
         </div>
@@ -159,8 +61,8 @@ function AdditionalDetailsCard({ previewData, onChange, user, onUserUpdate }) {
             className="login-input"
             style={inputStyle}
             placeholder="Enter house number"
-            value={houseNo}
-            onChange={(e) => handleFieldChange('houseNo', e.target.value)}
+            value={formData?.houseNo || ''}
+            onChange={(e) => onChange('houseNo', e.target.value)}
           />
         </div>
 
@@ -173,8 +75,8 @@ function AdditionalDetailsCard({ previewData, onChange, user, onUserUpdate }) {
             className="login-input"
             style={inputStyle}
             placeholder="Enter street"
-            value={street}
-            onChange={(e) => handleFieldChange('street', e.target.value)}
+            value={formData?.street || ''}
+            onChange={(e) => onChange('street', e.target.value)}
           />
         </div>
 
@@ -187,8 +89,8 @@ function AdditionalDetailsCard({ previewData, onChange, user, onUserUpdate }) {
             className="login-input"
             style={inputStyle}
             placeholder="Enter city"
-            value={city}
-            onChange={(e) => handleFieldChange('city', e.target.value)}
+            value={formData?.city || ''}
+            onChange={(e) => onChange('city', e.target.value)}
           />
         </div>
 
@@ -201,8 +103,8 @@ function AdditionalDetailsCard({ previewData, onChange, user, onUserUpdate }) {
             className="login-input"
             style={inputStyle}
             placeholder="Enter state"
-            value={stateVal}
-            onChange={(e) => handleFieldChange('state', e.target.value)}
+            value={formData?.state || ''}
+            onChange={(e) => onChange('state', e.target.value)}
           />
         </div>
 
@@ -215,8 +117,8 @@ function AdditionalDetailsCard({ previewData, onChange, user, onUserUpdate }) {
             className="login-input"
             style={inputStyle}
             placeholder="Enter country"
-            value={country}
-            onChange={(e) => handleFieldChange('country', e.target.value)}
+            value={formData?.country || ''}
+            onChange={(e) => onChange('country', e.target.value)}
           />
         </div>
 
@@ -229,8 +131,8 @@ function AdditionalDetailsCard({ previewData, onChange, user, onUserUpdate }) {
             className="login-input"
             style={inputStyle}
             placeholder="Enter pin code"
-            value={pincode}
-            onChange={(e) => handleFieldChange('pincode', e.target.value)}
+            value={formData?.pincode || ''}
+            onChange={(e) => onChange('pincode', e.target.value)}
           />
         </div>
       </div>
