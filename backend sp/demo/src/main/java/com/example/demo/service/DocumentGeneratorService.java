@@ -300,7 +300,7 @@ public class DocumentGeneratorService {
 
             if (applicant.getAddress() != null) {
                 PatentFormResponse.AddressDTO address = applicant.getAddress();
-                replaceTextInParagraph(paragraph, "{{HOUSE_NO}}", "Department of CSE");
+                replaceTextInParagraph(paragraph, "{{HOUSE_NO}}", address.getHouseNo());
                 replaceTextInParagraph(paragraph, "{{STREET}}",   address.getStreet());
                 replaceTextInParagraph(paragraph, "{{CITY}}",     address.getCity());
                 replaceTextInParagraph(paragraph, "{{STATE}}",    address.getState());
@@ -355,7 +355,7 @@ public class DocumentGeneratorService {
         // 5. Shared inventor address placeholders
         if (data.getApplicant() != null && data.getApplicant().getAddress() != null) {
             PatentFormResponse.AddressDTO addr = data.getApplicant().getAddress();
-            replaceTextInParagraph(paragraph, "{{INV_HOUSE_NO}}",     "Department of CSE");
+            replaceTextInParagraph(paragraph, "{{INV_HOUSE_NO}}",     addr.getHouseNo());
             replaceTextInParagraph(paragraph, "{{INV_STREET}}",       addr.getStreet());
             replaceTextInParagraph(paragraph, "{{INV_CITY}}",         addr.getCity());
             replaceTextInParagraph(paragraph, "{{INV_STATE}}",        addr.getState());
