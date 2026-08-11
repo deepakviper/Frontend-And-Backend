@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "npm --prefix \"patentform-main (1)/patentform-main/Patentform/frontend\" run dev",
-    "dev:frontend": "npm --prefix \"patentform-main (1)/patentform-main/Patentform/frontend\" run dev"
+    "dev:frontend": "npm --prefix \"patentform-main (1)/patentform-main/Patentform/frontend\" run dev",
+    "build": "npm --prefix \"patentform-main (1)/patentform-main/Patentform/frontend\" run build"
   }
 }

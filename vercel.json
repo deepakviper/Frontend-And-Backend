@@ -1,0 +1,4 @@
+{
+  "buildCommand": "npm --prefix \"patentform-main (1)/patentform-main/Patentform/frontend\" run build",
+  "outputDirectory": "patentform-main (1)/patentform-main/Patentform/frontend/dist"
+}
