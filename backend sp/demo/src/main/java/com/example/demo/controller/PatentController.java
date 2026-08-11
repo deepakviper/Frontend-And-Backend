@@ -68,13 +68,22 @@ public class PatentController {
     //   - data (required)        → JSON blob of PatentFormResponse
     //   - sourceFile (optional)  → source .docx (used only by Form 2)
     // ------------------------------------------------------------------
-    @PostMapping(value = "/download", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/download")
     public ResponseEntity<byte[]> downloadFilledForm(
-            @RequestPart("data") String dataJson,
-            @RequestPart(value = "sourceFile", required = false) MultipartFile sourceFile,
+            @RequestParam(value = "data", required = false) String dataParam,
+            @RequestPart(value = "data", required = false) String dataPart,
+            @RequestPart(value = "sourceFile", required = false) MultipartFile sourceFilePart,
+            @RequestParam(value = "sourceFile", required = false) MultipartFile sourceFileParam,
             @RequestParam(value = "formType", defaultValue = "form1") String formType) {
 
         try {
+            String dataJson = (dataParam != null && !dataParam.isBlank()) ? dataParam : dataPart;
+            MultipartFile sourceFile = (sourceFilePart != null && !sourceFilePart.isEmpty()) ? sourceFilePart : sourceFileParam;
+
+            if (dataJson == null || dataJson.isBlank()) {
+                dataJson = "{}";
+            }
+
             PatentFormResponse finalData = objectMapper.readValue(dataJson, PatentFormResponse.class);
 
             byte[] documentBytes;

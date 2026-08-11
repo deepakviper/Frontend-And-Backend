@@ -151,7 +151,8 @@ function App() {
     try {
       for (const formKey of selectedForms) {
         const payloadData = new FormData();
-        payloadData.append('data', JSON.stringify(parsedData));
+        const jsonBlob = new Blob([JSON.stringify(parsedData || {})], { type: 'application/json' });
+        payloadData.append('data', jsonBlob, 'data.json');
         if (sourceFile) {
           payloadData.append('sourceFile', sourceFile);
         }
@@ -164,7 +165,8 @@ function App() {
         });
 
         if (!response.ok) {
-          throw new Error(`Server error during ${formKey} creation.`);
+          const errText = await response.text().catch(() => '');
+          throw new Error(`Download failed (${response.status}): ${errText || response.statusText}`);
         }
 
         const blob = await response.blob();
