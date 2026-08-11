@@ -130,6 +130,17 @@ public class DocumentParserService {
         // Plain-text sections
         extractPatentSections(fullText, response);
 
+        PatentFormResponse.PrincipalDTO principal = new PatentFormResponse.PrincipalDTO();
+        Pattern principalPattern = Pattern.compile("(?i)(?:principal\\s*name|name\\s+of\\s+principal|principal)\\s*[:\\-]?\\s*([A-Za-z0-9.\\s]{3,50})");
+        Matcher principalMatcher = principalPattern.matcher(fullText);
+        if (principalMatcher.find()) {
+            String found = principalMatcher.group(1).trim();
+            if (!found.toLowerCase().contains("details") && !found.toLowerCase().contains("signature") && !found.toLowerCase().contains("office")) {
+                principal.setName(found);
+            }
+        }
+        response.setPrincipal(principal);
+
         // ✅ Rich XML blocks for Form 2
         response.setDescriptionXml(descriptionXml != null ? descriptionXml : "");
         response.setClaimsXml(claimsXml != null ? claimsXml : "");

@@ -17,11 +17,11 @@ function PrincipalDetailsCard({ previewData, onChange, user, onUserUpdate }) {
     }
 
     const p = user?.principal || {};
-    setPrincipalName(p.name || user?.address?.principalName || '');
-    setTelephone(p.telephone || user?.address?.telephone || '');
-    setMobile(p.mobile || user?.address?.mobile || '');
-    setFax(p.fax || user?.address?.fax || '');
-    setEmail(p.email || user?.address?.email || '');
+    setPrincipalName(p.name || '');
+    setTelephone(p.telephone || '');
+    setMobile(p.mobile || '');
+    setFax(p.fax || '');
+    setEmail(p.email || '');
   }, [user]);
 
   const syncChanges = (updatedFields) => {

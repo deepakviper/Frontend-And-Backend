@@ -187,13 +187,14 @@ function App() {
       setSourceFile(file);
     }
 
+    const extractedPrincipal = data?.principal || {};
     const currentPrincipal = {
-      name: user?.principal?.name || data?.principal?.name || '',
-      designation: user?.principal?.designation || data?.principal?.designation || 'Principal',
-      telephone: user?.principal?.telephone || data?.principal?.telephone || '',
-      mobile: user?.principal?.mobile || data?.principal?.mobile || '',
-      fax: user?.principal?.fax || data?.principal?.fax || '',
-      email: user?.principal?.email || data?.principal?.email || ''
+      name: user?.principal?.name || extractedPrincipal.name || '',
+      designation: user?.principal?.designation || extractedPrincipal.designation || 'Principal',
+      telephone: user?.principal?.telephone || extractedPrincipal.telephone || '',
+      mobile: user?.principal?.mobile || extractedPrincipal.mobile || '',
+      fax: user?.principal?.fax || extractedPrincipal.fax || '',
+      email: user?.principal?.email || extractedPrincipal.email || ''
     };
 
     if (data) {
