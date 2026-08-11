@@ -398,8 +398,8 @@ public class Form2GeneratorService {
             String fontFamily = sourceRun.getFontFamily();
             if (fontFamily != null) newRun.setFontFamily(fontFamily);
 
-            int fontSize = sourceRun.getFontSize();
-            if (fontSize > 0) newRun.setFontSize(fontSize);
+            Double fontSize = sourceRun.getFontSizeAsDouble();
+            if (fontSize != null && fontSize > 0) newRun.setFontSize(fontSize);
 
             newRun.setBold(sourceRun.isBold());
             newRun.setItalic(sourceRun.isItalic());

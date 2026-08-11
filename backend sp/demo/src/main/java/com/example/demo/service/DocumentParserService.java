@@ -430,8 +430,6 @@ public class DocumentParserService {
         String inventorAddressLine = extractAddressLineFromStructuredText(fullText);
 
         String street = "";
-        String city = "";
-        String state = "";
         String pincode = "";
         String country = "India";
 
@@ -459,9 +457,6 @@ public class DocumentParserService {
 
             int size = cleanParts.size();
             if (size >= 3) {
-                state = cleanParts.get(size - 1);
-                city = cleanParts.get(size - 2);
-
                 StringBuilder streetBuilder = new StringBuilder();
                 for (int i = 0; i < size - 2; i++) {
                     if (!streetBuilder.isEmpty()) streetBuilder.append(", ");
@@ -469,8 +464,6 @@ public class DocumentParserService {
                 }
                 street = streetBuilder.toString();
             } else if (size == 2) {
-                state = cleanParts.get(1);
-                city = cleanParts.get(0);
                 street = cleanParts.get(0);
             } else if (size == 1) {
                 street = cleanParts.get(0);
@@ -479,8 +472,6 @@ public class DocumentParserService {
 
         if (street.isEmpty() && applicantAddress != null) {
             street = applicantAddress.getStreet();
-            city = applicantAddress.getCity();
-            state = applicantAddress.getState();
             pincode = applicantAddress.getPincode();
             if (applicantAddress.getCountry() != null) country = applicantAddress.getCountry();
         }

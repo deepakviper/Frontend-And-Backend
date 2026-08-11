@@ -455,7 +455,7 @@ public class DocumentGeneratorService {
         // Preserve base run formatting from the first run
         XWPFRun baseRun  = runs.get(0);
         String  fontName = baseRun.getFontFamily() != null ? baseRun.getFontFamily() : "Arial";
-        int     fontSize = baseRun.getFontSize() > 0      ? baseRun.getFontSize()    : 11;
+        Double  fontSize = baseRun.getFontSizeAsDouble();
         boolean isBold   = baseRun.isBold();
         String  color    = baseRun.getColor();
 
@@ -475,7 +475,7 @@ public class DocumentGeneratorService {
                 XWPFRun newRun = paragraph.createRun();
                 newRun.setText(tabParts[t]);
                 newRun.setFontFamily(fontName);
-                if (fontSize > 0) newRun.setFontSize(fontSize);
+                if (fontSize != null && fontSize > 0) newRun.setFontSize(fontSize);
                 newRun.setBold(isBold);
                 if (color != null) newRun.setColor(color);
 
