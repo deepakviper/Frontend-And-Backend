@@ -1,0 +1,9 @@
+{
+  "name": "frontend-and-backend-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix \"patentform-main (1)/patentform-main/Patentform/frontend\" run dev",
+    "dev:frontend": "npm --prefix \"patentform-main (1)/patentform-main/Patentform/frontend\" run dev"
+  }
+}

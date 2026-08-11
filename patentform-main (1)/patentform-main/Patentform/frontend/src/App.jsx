@@ -19,13 +19,16 @@ function App() {
         city: '',
         state: '',
         country: '',
-        pincode: '',
-        principalName: '',
-        telephone: '',
-        mobile: '',
-        fax: '',
-        email: ''
+        pincode: ''
       }
+    },
+    principal: {
+      name: '',
+      designation: 'Principal',
+      telephone: '',
+      mobile: '',
+      fax: '',
+      email: ''
     },
     inventors: []
   });
@@ -39,18 +42,21 @@ function App() {
     name: '',
     email: '',
     additionalMembers: [],
+    principal: {
+      name: '',
+      designation: 'Principal',
+      telephone: '',
+      mobile: '',
+      fax: '',
+      email: ''
+    },
     address: {
       houseNo: '',
       street: '',
       city: '',
       state: '',
       country: '',
-      pincode: '',
-      principalName: '',
-      telephone: '',
-      mobile: '',
-      fax: '',
-      email: ''
+      pincode: ''
     }
   });
 
@@ -133,18 +139,21 @@ function App() {
       name: '',
       email: '',
       additionalMembers: [],
+      principal: {
+        name: '',
+        designation: 'Principal',
+        telephone: '',
+        mobile: '',
+        fax: '',
+        email: ''
+      },
       address: {
         houseNo: '',
         street: '',
         city: '',
         state: '',
         country: '',
-        pincode: '',
-        principalName: '',
-        telephone: '',
-        mobile: '',
-        fax: '',
-        email: ''
+        pincode: ''
       }
     });
     setParsedData({
@@ -157,13 +166,16 @@ function App() {
           city: '',
           state: '',
           country: '',
-          pincode: '',
-          principalName: '',
-          telephone: '',
-          mobile: '',
-          fax: '',
-          email: ''
+          pincode: ''
         }
+      },
+      principal: {
+        name: '',
+        designation: 'Principal',
+        telephone: '',
+        mobile: '',
+        fax: '',
+        email: ''
       },
       inventors: []
     });
@@ -174,6 +186,16 @@ function App() {
     if (file) {
       setSourceFile(file);
     }
+
+    const currentPrincipal = {
+      name: user?.principal?.name || data?.principal?.name || '',
+      designation: user?.principal?.designation || data?.principal?.designation || 'Principal',
+      telephone: user?.principal?.telephone || data?.principal?.telephone || '',
+      mobile: user?.principal?.mobile || data?.principal?.mobile || '',
+      fax: user?.principal?.fax || data?.principal?.fax || '',
+      email: user?.principal?.email || data?.principal?.email || ''
+    };
+
     if (data) {
       const parsedAddress = data.applicant?.address || {};
 
@@ -188,7 +210,8 @@ function App() {
         };
         return {
           ...prevUser,
-          address: updatedAddress
+          address: updatedAddress,
+          principal: currentPrincipal
         };
       });
 
@@ -207,14 +230,10 @@ function App() {
             city: user?.address?.city || data.applicant?.address?.city || '',
             state: user?.address?.state || data.applicant?.address?.state || '',
             country: user?.address?.country || data.applicant?.address?.country || '',
-            pincode: user?.address?.pincode || data.applicant?.address?.pincode || '',
-            principalName: user?.address?.principalName || '',
-            telephone: user?.address?.telephone || '',
-            mobile: user?.address?.mobile || '',
-            fax: user?.address?.fax || '',
-            email: user?.address?.email || ''
+            pincode: user?.address?.pincode || data.applicant?.address?.pincode || ''
           }
         },
+        principal: currentPrincipal,
         inventors: (user?.additionalMembers || []).map(m => ({
           name: m.name,
           nationality: 'Indian',
@@ -234,14 +253,10 @@ function App() {
             city: user?.address?.city || '',
             state: user?.address?.state || '',
             country: user?.address?.country || '',
-            pincode: user?.address?.pincode || '',
-            principalName: user?.address?.principalName || '',
-            telephone: user?.address?.telephone || '',
-            mobile: user?.address?.mobile || '',
-            fax: user?.address?.fax || '',
-            email: user?.address?.email || ''
+            pincode: user?.address?.pincode || ''
           }
         },
+        principal: currentPrincipal,
         inventors: (user?.additionalMembers || []).map(m => ({
           name: m.name,
           nationality: 'Indian',

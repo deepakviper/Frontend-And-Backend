@@ -125,6 +125,19 @@ public class Form5GeneratorService {
                 + " " + today.format(DateTimeFormatter.ofPattern("yyyy"));
         map.put("{date}", formattedDate);
 
+        // 5. Patent Office City
+        String userCity = "Chennai";
+        if (data.getApplicant() != null && data.getApplicant().getAddress() != null
+                && notBlank(data.getApplicant().getAddress().getCity())) {
+            userCity = data.getApplicant().getAddress().getCity().trim();
+        }
+        map.put("The Patent Office, at Chennai", "The Patent Office, at " + userCity);
+        map.put("The Patent Office, Chennai", "The Patent Office, " + userCity);
+        map.put("The Patent Office, at…..", "The Patent Office, at " + userCity);
+        map.put("The Patent Office, at.....", "The Patent Office, at " + userCity);
+        map.put("The Patent Office, at...", "The Patent Office, at " + userCity);
+        map.put("The Patent Office, at..", "The Patent Office, at " + userCity);
+
         return map;
     }
 

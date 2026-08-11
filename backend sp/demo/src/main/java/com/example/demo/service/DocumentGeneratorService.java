@@ -309,6 +309,16 @@ public class DocumentGeneratorService {
             }
         }
 
+        // Patent Office City replacement
+        String userCity = "Chennai";
+        if (data.getApplicant() != null && data.getApplicant().getAddress() != null
+                && data.getApplicant().getAddress().getCity() != null
+                && !data.getApplicant().getAddress().getCity().trim().isEmpty()) {
+            userCity = data.getApplicant().getAddress().getCity().trim();
+        }
+        replacePatentOfficeLine(paragraph, userCity);
+
+
         // 3. Single-inventor row mapping (Unified / cloned-row route)
         if (specificInventor != null) {
             replaceTextInParagraph(paragraph, "{{INV_NAME}}",
@@ -495,6 +505,25 @@ public class DocumentGeneratorService {
             case 2:  return "nd";
             case 3:  return "rd";
             default: return "th";
+        }
+    }
+
+    private void replacePatentOfficeLine(XWPFParagraph paragraph, String userCity) {
+        if (paragraph == null || paragraph.getText() == null) return;
+        String fullText = paragraph.getText();
+        if (!fullText.contains("Patent Office")) return;
+
+        String cityToUse = (userCity != null && !userCity.trim().isEmpty()) ? userCity.trim() : "Chennai";
+
+        // Regex matches "The Patent Office, at" followed by any ellipsis (U+2026) or dots/spaces
+        String targetRegex = "The Patent Office,\\s*at[\\u2026\\s.]*";
+        if (fullText.matches(".*" + targetRegex + ".*")) {
+            String updatedText = fullText.replaceAll(targetRegex, "The Patent Office, at " + cityToUse);
+            replaceTextInParagraph(paragraph, fullText, updatedText);
+        } else if (fullText.contains("The Patent Office, at Chennai")) {
+            replaceTextInParagraph(paragraph, "The Patent Office, at Chennai", "The Patent Office, at " + cityToUse);
+        } else if (fullText.contains("The Patent Office, Chennai")) {
+            replaceTextInParagraph(paragraph, "The Patent Office, Chennai", "The Patent Office, " + cityToUse);
         }
     }
 }

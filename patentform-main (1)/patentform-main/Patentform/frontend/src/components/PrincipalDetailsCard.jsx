@@ -16,53 +16,51 @@ function PrincipalDetailsCard({ previewData, onChange, user, onUserUpdate }) {
       return;
     }
 
-    setPrincipalName(user?.email || '');
-    const addr = user?.address || {};
-    setTelephone(addr.telephone || '');
-    setMobile(addr.mobile || '');
-    setFax(addr.fax || '');
-    setEmail(addr.email || '');
+    const p = user?.principal || {};
+    setPrincipalName(p.name || user?.address?.principalName || '');
+    setTelephone(p.telephone || user?.address?.telephone || '');
+    setMobile(p.mobile || user?.address?.mobile || '');
+    setFax(p.fax || user?.address?.fax || '');
+    setEmail(p.email || user?.address?.email || '');
   }, [user]);
 
   const syncChanges = (updatedFields) => {
     isSelfTriggeredRef.current = true;
 
-    const mergedAddress = {
-      ...user?.address,
-      telephone: updatedFields.hasOwnProperty('telephone') ? updatedFields.telephone : telephone,
-      mobile: updatedFields.hasOwnProperty('mobile') ? updatedFields.mobile : mobile,
-      fax: updatedFields.hasOwnProperty('fax') ? updatedFields.fax : fax,
-      email: updatedFields.hasOwnProperty('email') ? updatedFields.email : email,
-    };
-
     const newPrincipalName = updatedFields.hasOwnProperty('principalName') ? updatedFields.principalName : principalName;
+    const newTelephone = updatedFields.hasOwnProperty('telephone') ? updatedFields.telephone : telephone;
+    const newMobile = updatedFields.hasOwnProperty('mobile') ? updatedFields.mobile : mobile;
+    const newFax = updatedFields.hasOwnProperty('fax') ? updatedFields.fax : fax;
+    const newEmail = updatedFields.hasOwnProperty('email') ? updatedFields.email : email;
+
+    const updatedPrincipal = {
+      name: newPrincipalName,
+      designation: user?.principal?.designation || 'Principal',
+      telephone: newTelephone,
+      mobile: newMobile,
+      fax: newFax,
+      email: newEmail
+    };
 
     const updatedUser = {
       ...user,
-      email: newPrincipalName,
-      address: mergedAddress
+      principal: updatedPrincipal
     };
 
     let updatedData = null;
     if (previewData) {
       updatedData = {
         ...previewData,
-        applicant: {
-          ...previewData.applicant,
-          email: newPrincipalName,
-          address: {
-            ...previewData.applicant?.address,
-            ...mergedAddress
-          }
-        }
+        principal: updatedPrincipal
       };
     } else {
       updatedData = {
         applicant: {
           name: user?.name || '',
-          email: newPrincipalName,
-          address: mergedAddress
+          email: user?.email || '',
+          address: user?.address || {}
         },
+        principal: updatedPrincipal,
         inventors: (user?.additionalMembers || []).map(m => ({
           name: m.name,
           nationality: 'Indian',
