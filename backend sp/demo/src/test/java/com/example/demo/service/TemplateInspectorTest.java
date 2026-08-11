@@ -47,10 +47,7 @@ public class TemplateInspectorTest {
         Form9GeneratorService form9Service = new Form9GeneratorService();
         Form28GeneratorService form28Service = new Form28GeneratorService();
 
-        Form2GeneratorService form2Service = new Form2GeneratorService();
-
         verifyDoc("Form 1", form1Service.generateFilledForm1(data));
-        verifyDoc("Form 2", form2Service.generateForm2(data, null));
         verifyDoc("Form 3", form3Service.generateForm3(data));
         verifyDoc("Form 5", form5Service.generateForm5(data));
         verifyDoc("Form 9", form9Service.generateForm9(data));

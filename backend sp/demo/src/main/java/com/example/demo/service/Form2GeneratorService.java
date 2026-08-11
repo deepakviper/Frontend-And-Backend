@@ -65,25 +65,23 @@ public class Form2GeneratorService {
             if (sourceFileBytes != null && sourceFileBytes.length > 0) {
                 try (XWPFDocument sourceDoc = new XWPFDocument(new ByteArrayInputStream(sourceFileBytes))) {
 
-                    // Description (no page break at start)
+                    // Description
                     copySectionFromSource(targetDoc, sourceDoc, "{description}",
                             "(?i)^\\s*DESCRIPTION\\s*:?\\s*$",
-                            "(?i)^\\s*(CLAIMS|WE CLAIM|I CLAIM)\\s*:?\\s*$",
-                            false);
+                            "(?i)^\\s*(CLAIMS|WE CLAIM|I CLAIM)\\s*:?\\s*$");
 
-                    // Claims — MUST START ON A NEW PAGE
+                    // Claims — smart: use source if available, else auto-generate
                     handleClaimsSection(targetDoc, sourceDoc, data);
 
-                    // Abstract — MUST START ON A NEW PAGE
+                    // Abstract
                     copySectionFromSource(targetDoc, sourceDoc, "{abstract}",
                             "(?i)^\\s*ABSTRACT\\s*:?\\s*$",
-                            "(?i)^\\s*DESCRIPTION\\s*:?\\s*$",
-                            true);
+                            "(?i)^\\s*DESCRIPTION\\s*:?\\s*$");
                 }
             } else {
-                fallbackPlainTextInjection(targetDoc, "{description}", data.getDescriptionXml(), false);
-                fallbackPlainTextInjection(targetDoc, "{claims}",      data.getClaimsXml(), true);
-                fallbackPlainTextInjection(targetDoc, "{abstract}",    data.getAbstractXml(), true);
+                fallbackPlainTextInjection(targetDoc, "{description}", data.getDescriptionXml());
+                fallbackPlainTextInjection(targetDoc, "{claims}",      data.getClaimsXml());
+                fallbackPlainTextInjection(targetDoc, "{abstract}",    data.getAbstractXml());
             }
 
             // 3. Write output
@@ -111,8 +109,7 @@ public class Form2GeneratorService {
             System.out.println("✅ Source has CLAIMS section — using it directly");
             copySectionFromSource(targetDoc, sourceDoc, "{claims}",
                     "(?i)^\\s*(CLAIMS|WE CLAIM|I CLAIM)\\s*:?\\s*$",
-                    null,
-                    true);
+                    null);
         } else {
             System.out.println("ℹ️ Source has NO CLAIMS section — auto-generating from Workflow Methodology");
             generateAutoClaims(targetDoc, sourceDoc, data);
@@ -172,27 +169,27 @@ public class Form2GeneratorService {
 
         // ---- Now insert them into target ----
 
-        // Preamble: "I/We Claim," with forced page break at start
+        // Preamble: "I/We Claim,"
         String preamble = (data.getInventors() != null && data.getInventors().size() > 1)
                 ? "We Claim,"
                 : "I/We Claim,";
 
-        insertParagraph(targetDoc, targetPlaceholder, preamble, true, false, 12, true);
-        insertParagraph(targetDoc, targetPlaceholder, "", false, false, 11, false);
+        insertParagraph(targetDoc, targetPlaceholder, preamble, true, false, 12);
+        insertParagraph(targetDoc, targetPlaceholder, "", false, false, 11);
 
         // Numbered claims
         int claimNumber = 1;
         for (ClaimEntry entry : claims) {
             String claimText = claimNumber + ". " + entry.text;
-            insertParagraph(targetDoc, targetPlaceholder, claimText, false, false, 11, false);
+            insertParagraph(targetDoc, targetPlaceholder, claimText, false, false, 11);
 
             // Sub-bullet points (if any)
             for (String bullet : entry.subBullets) {
-                insertParagraph(targetDoc, targetPlaceholder, "  • " + bullet, false, false, 11, false);
+                insertParagraph(targetDoc, targetPlaceholder, "  • " + bullet, false, false, 11);
             }
 
             // Blank line between claims
-            insertParagraph(targetDoc, targetPlaceholder, "", false, false, 11, false);
+            insertParagraph(targetDoc, targetPlaceholder, "", false, false, 11);
 
             claimNumber++;
         }
@@ -225,28 +222,41 @@ public class Form2GeneratorService {
             if (!capturing) {
                 if (startPattern.matcher(trimmed).find()) {
                     capturing = true;
-                    currentStage = new StringBuilder();
                 }
                 continue;
             } else {
                 if (endPattern.matcher(trimmed).find()) {
-                    break;
-                }
-
-                if (trimmed.matches("(?i)^stage\\s*\\d+.*") || trimmed.matches("^[0-9]+\\..*")) {
                     if (currentStage != null && currentStage.length() > 0) {
                         stages.add(currentStage.toString().trim());
                     }
-                    currentStage = new StringBuilder(trimmed);
-                } else if (!trimmed.isEmpty()) {
-                    if (currentStage == null) currentStage = new StringBuilder();
-                    if (currentStage.length() > 0) currentStage.append("\n");
-                    currentStage.append(trimmed);
+                    break;
+                }
+
+                if (trimmed.isEmpty()) continue;
+
+                // Detect stage boundary: "Stage 1:", "Stage 2:", etc.
+                if (trimmed.matches("(?i)^Stage\\s+\\d+\\s*:.*")) {
+                    // Save previous stage
+                    if (currentStage != null && currentStage.length() > 0) {
+                        stages.add(currentStage.toString().trim());
+                    }
+                    // Start new stage — strip "Stage N:" prefix
+                    String cleaned = trimmed.replaceFirst("(?i)^Stage\\s+\\d+\\s*:\\s*", "");
+                    currentStage = new StringBuilder(cleaned);
+                } else if (currentStage != null) {
+                    // Continuation lines (like sub-bullets)
+                    currentStage.append("\n").append(trimmed);
+                } else {
+                    // Text before first "Stage N:" — start a stage-less block
+                    if (currentStage == null) {
+                        currentStage = new StringBuilder(trimmed);
+                    }
                 }
             }
         }
 
-        if (currentStage != null && currentStage.length() > 0) {
+        // Add final stage if we didn't hit end pattern
+        if (capturing && currentStage != null && currentStage.length() > 0) {
             stages.add(currentStage.toString().trim());
         }
 
@@ -255,6 +265,16 @@ public class Form2GeneratorService {
 
     /**
      * Parses a stage text into main claim text + optional sub-bullets.
+     * Example input:
+     *   "Risk Classification: Risks are classified into:
+     *    Low Risk
+     *    Moderate Risk
+     *    High Risk
+     *    Critical Risk"
+     *
+     * Returns:
+     *   text = "Risk Classification: Risks are classified into:"
+     *   subBullets = ["Low Risk", "Moderate Risk", "High Risk", "Critical Risk"]
      */
     private ClaimEntry parseStageAsClaim(String stageText) {
         if (stageText == null || stageText.isBlank()) return null;
@@ -283,12 +303,9 @@ public class Form2GeneratorService {
         }
     }
 
-    private XWPFParagraph insertParagraph(XWPFDocument doc, XWPFParagraph beforeThis,
-                                         String text, boolean bold, boolean italic, int fontSize, boolean pageBreakAtStart) {
+    private void insertParagraph(XWPFDocument doc, XWPFParagraph beforeThis,
+                                 String text, boolean bold, boolean italic, int fontSize) {
         XWPFParagraph newPara = doc.insertNewParagraph(beforeThis.getCTP().newCursor());
-        if (pageBreakAtStart) {
-            newPara.setPageBreak(true);
-        }
         XWPFRun run = newPara.createRun();
         run.setText(text);
         run.setFontFamily("Times New Roman");
@@ -296,7 +313,6 @@ public class Form2GeneratorService {
         run.setColor("000000");
         run.setBold(bold);
         run.setItalic(italic);
-        return newPara;
     }
 
     // ------------------------------------------------------------------
@@ -304,8 +320,7 @@ public class Form2GeneratorService {
     // ------------------------------------------------------------------
 
     private void copySectionFromSource(XWPFDocument targetDoc, XWPFDocument sourceDoc,
-                                       String placeholder, String startPatternStr, String endPatternStr,
-                                       boolean forcePageBreakAtStart) {
+                                       String placeholder, String startPatternStr, String endPatternStr) {
 
         XWPFParagraph targetPlaceholderPara = findParagraphContainingPlaceholder(targetDoc, placeholder);
         if (targetPlaceholderPara == null) {
@@ -330,12 +345,6 @@ public class Form2GeneratorService {
                 if (!capturing) {
                     if (startPattern.matcher(text).find()) {
                         capturing = true;
-                        try {
-                            copyParagraphToTarget(sourcePara, targetDoc, targetPlaceholderPara, forcePageBreakAtStart);
-                            copiedCount++;
-                        } catch (Exception ex) {
-                            System.out.println("   ⚠️ Failed to copy heading paragraph: " + ex.getMessage());
-                        }
                     }
                     continue;
                 } else {
@@ -344,8 +353,7 @@ public class Form2GeneratorService {
                     }
 
                     try {
-                        boolean setBreak = (copiedCount == 0 && forcePageBreakAtStart);
-                        copyParagraphToTarget(sourcePara, targetDoc, targetPlaceholderPara, setBreak);
+                        copyParagraphToTarget(sourcePara, targetDoc, targetPlaceholderPara);
                         copiedCount++;
                     } catch (Exception ex) {
                         System.out.println("   ⚠️ Failed to copy paragraph: " + ex.getMessage());
@@ -370,13 +378,9 @@ public class Form2GeneratorService {
     }
 
     private void copyParagraphToTarget(XWPFParagraph sourcePara, XWPFDocument targetDoc,
-                                       XWPFParagraph beforeThisPara, boolean setPageBreak) throws Exception {
+                                       XWPFParagraph beforeThisPara) throws Exception {
 
         XWPFParagraph newPara = targetDoc.insertNewParagraph(beforeThisPara.getCTP().newCursor());
-
-        if (setPageBreak) {
-            newPara.setPageBreak(true);
-        }
 
         if (sourcePara.getCTP().getPPr() != null) {
             newPara.getCTP().setPPr((org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr)
@@ -444,7 +448,7 @@ public class Form2GeneratorService {
     // FALLBACK — Plain text injection (no source file case)
     // ------------------------------------------------------------------
 
-    private void fallbackPlainTextInjection(XWPFDocument document, String placeholder, String xmlContent, boolean forcePageBreakAtStart) {
+    private void fallbackPlainTextInjection(XWPFDocument document, String placeholder, String xmlContent) {
         String plainText = getPlainTextFromXml(xmlContent);
         XWPFParagraph target = findParagraphContainingPlaceholder(document, placeholder);
 
@@ -455,16 +459,11 @@ public class Form2GeneratorService {
             return;
         }
 
-        boolean isFirst = true;
         String[] lines = plainText.split("\n");
         for (String line : lines) {
             if (line.trim().isEmpty()) continue;
 
             XWPFParagraph newPara = document.insertNewParagraph(target.getCTP().newCursor());
-            if (isFirst && forcePageBreakAtStart) {
-                newPara.setPageBreak(true);
-                isFirst = false;
-            }
             XWPFRun run = newPara.createRun();
             run.setText(line.trim());
             run.setFontFamily("Times New Roman");

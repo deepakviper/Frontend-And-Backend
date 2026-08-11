@@ -67,17 +67,15 @@ function App() {
     setParsedData(prev => ({
       ...(baseParsedData || prev || {}),
       applicant: {
-        ...(baseParsedData?.applicant || prev?.applicant || {}),
-        name: currentFormData.collegeName || baseParsedData?.applicant?.name || '',
-        email: currentFormData.email || baseParsedData?.applicant?.email || '',
+        name: currentFormData.collegeName || '',
+        email: currentFormData.email || '',
         address: {
-          ...(baseParsedData?.applicant?.address || prev?.applicant?.address || {}),
           houseNo: currentFormData.houseNo || '',
-          street: currentFormData.street || baseParsedData?.applicant?.address?.street || '',
-          city: currentFormData.city || baseParsedData?.applicant?.address?.city || '',
-          state: currentFormData.state || baseParsedData?.applicant?.address?.state || '',
-          country: currentFormData.country || baseParsedData?.applicant?.address?.country || '',
-          pincode: currentFormData.pincode || baseParsedData?.applicant?.address?.pincode || ''
+          street: currentFormData.street || '',
+          city: currentFormData.city || '',
+          state: currentFormData.state || '',
+          country: currentFormData.country || '',
+          pincode: currentFormData.pincode || ''
         }
       },
       principal: {
@@ -237,22 +235,7 @@ function App() {
     }
 
     if (data) {
-      const parsedAddress = data.applicant?.address || {};
-      setFormData(prev => {
-        // Pre-fill extracted data ONLY for fields that are currently blank
-        const updated = {
-          ...prev,
-          collegeName: prev.collegeName || data.applicant?.name || '',
-          street: prev.street || parsedAddress.street || '',
-          city: prev.city || parsedAddress.city || '',
-          state: prev.state || parsedAddress.state || '',
-          country: prev.country || parsedAddress.country || '',
-          pincode: prev.pincode || parsedAddress.pincode || '',
-          principalName: prev.principalName || data.principal?.name || ''
-        };
-        syncParsedData(updated, data);
-        return updated;
-      });
+      syncParsedData(formData, data);
     }
   };
 
