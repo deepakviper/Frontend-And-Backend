@@ -75,7 +75,8 @@ function UploadCard({ onDataParsed }) {
       const formData = new FormData();
       formData.append('file', uploadedFile);
 
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+      const rawBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+      const baseUrl = rawBaseUrl.replace(/\/+$/, '');
       const parseResponse = await fetch(`${baseUrl}/api/patent/parse`, {
         method: 'POST',
         body: formData,

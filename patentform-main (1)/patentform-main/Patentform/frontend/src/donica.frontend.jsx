@@ -31,7 +31,9 @@ function App() {
     setIsDownloading(true);
 
     try {
-      const downloadResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/patent/download`, {
+      const rawBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+      const baseUrl = rawBaseUrl.replace(/\/+$/, '');
+      const downloadResponse = await fetch(`${baseUrl}/api/patent/download`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
