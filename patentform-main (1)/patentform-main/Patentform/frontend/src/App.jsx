@@ -151,8 +151,7 @@ function App() {
     try {
       for (const formKey of selectedForms) {
         const payloadData = new FormData();
-        const jsonBlob = new Blob([JSON.stringify(parsedData || {})], { type: 'application/json' });
-        payloadData.append('data', jsonBlob, 'data.json');
+        payloadData.append('data', JSON.stringify(parsedData || {}));
         if (sourceFile) {
           payloadData.append('sourceFile', sourceFile);
         }
