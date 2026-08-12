@@ -8,6 +8,8 @@ import com.example.demo.service.Form3GeneratorService;
 import com.example.demo.service.Form5GeneratorService;
 import com.example.demo.service.Form9GeneratorService;
 import com.example.demo.service.Form28GeneratorService;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,9 +44,25 @@ public class PatentController {
     @Autowired
     private Form28GeneratorService form28Service;
 
-    // Reusable JSON mapper — ignores unknown fields to prevent crashes
-    private final ObjectMapper objectMapper = new ObjectMapper()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    // Reusable JSON mapper — configured to handle large strings (up to 50MB / 50M chars) and ignore unknown fields
+    private final ObjectMapper objectMapper = createObjectMapper();
+
+    private static ObjectMapper createObjectMapper() {
+        try {
+            StreamReadConstraints constraints = StreamReadConstraints.builder()
+                    .maxStringLength(50_000_000)
+                    .build();
+            JsonFactory jsonFactory = JsonFactory.builder()
+                    .streamReadConstraints(constraints)
+                    .build();
+            return new ObjectMapper(jsonFactory)
+                    .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        } catch (Throwable t) {
+            // Fallback for older Jackson versions where StreamReadConstraints is not available
+            return new ObjectMapper()
+                    .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        }
+    }
 
     // ------------------------------------------------------------------
     // /parse — Extract patent data from uploaded document
