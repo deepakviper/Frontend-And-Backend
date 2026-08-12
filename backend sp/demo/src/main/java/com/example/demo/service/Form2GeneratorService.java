@@ -29,10 +29,11 @@ public class Form2GeneratorService {
         System.out.println("========== FORM 2 GENERATE DEBUG ==========");
         System.out.println("Principal: " + (data.getPrincipal() != null ? data.getPrincipal().getName() : "NULL"));
         System.out.println("Inventors count: " + (data.getInventors() != null ? data.getInventors().size() : 0));
-        System.out.println("Source file available: " + (sourceFileBytes != null ? "YES (" + sourceFileBytes.length + " bytes)" : "NO"));
+        System.out.println("Source file available: "
+                + (sourceFileBytes != null ? "YES (" + sourceFileBytes.length + " bytes)" : "NO"));
         System.out.println("============================================");
 
-        ClassPathResource resource = new ClassPathResource("Form2,main .docx");
+        ClassPathResource resource = new ClassPathResource("Form2MAIN.docx");
 
         if (!resource.exists()) {
             logger.error("❌ Form2,main .docx not found in resources/");
@@ -40,7 +41,7 @@ public class Form2GeneratorService {
         }
 
         try (InputStream is = resource.getInputStream();
-             XWPFDocument targetDoc = new XWPFDocument(is)) {
+                XWPFDocument targetDoc = new XWPFDocument(is)) {
 
             // 1. Text placeholders
             Map<String, String> textReplacements = buildTextReplacementsMap(data);
@@ -80,8 +81,8 @@ public class Form2GeneratorService {
                 }
             } else {
                 fallbackPlainTextInjection(targetDoc, "{description}", data.getDescriptionXml());
-                fallbackPlainTextInjection(targetDoc, "{claims}",      data.getClaimsXml());
-                fallbackPlainTextInjection(targetDoc, "{abstract}",    data.getAbstractXml());
+                fallbackPlainTextInjection(targetDoc, "{claims}", data.getClaimsXml());
+                fallbackPlainTextInjection(targetDoc, "{abstract}", data.getAbstractXml());
             }
 
             // 3. Write output
@@ -156,8 +157,7 @@ public class Form2GeneratorService {
                 "The patent disclosure covers Novel System, Design and Method of "
                         + title
                         + " as described above in Fig 1 & 2. The operational methodology of the invention consists of the following stages:",
-                new ArrayList<>()
-        ));
+                new ArrayList<>()));
 
         // Claims 2-N — stages
         for (String stage : stages) {
@@ -207,16 +207,19 @@ public class Form2GeneratorService {
         List<String> stages = new ArrayList<>();
 
         Pattern startPattern = Pattern.compile("(?i)^\\s*WORKFLOW\\s+METHODOLOGY\\s*:?\\s*$");
-        Pattern endPattern = Pattern.compile("(?i)^\\s*(EXEMPLARY|UNIQUENESS|IMPLEMENTATION\\s+SCENARIO|REFERENCES)\\s*.*");
+        Pattern endPattern = Pattern
+                .compile("(?i)^\\s*(EXEMPLARY|UNIQUENESS|IMPLEMENTATION\\s+SCENARIO|REFERENCES)\\s*.*");
 
         boolean capturing = false;
         StringBuilder currentStage = null;
 
         for (IBodyElement el : sourceDoc.getBodyElements()) {
-            if (!(el instanceof XWPFParagraph)) continue;
+            if (!(el instanceof XWPFParagraph))
+                continue;
 
             String text = ((XWPFParagraph) el).getText();
-            if (text == null) text = "";
+            if (text == null)
+                text = "";
             String trimmed = text.trim();
 
             if (!capturing) {
@@ -232,7 +235,8 @@ public class Form2GeneratorService {
                     break;
                 }
 
-                if (trimmed.isEmpty()) continue;
+                if (trimmed.isEmpty())
+                    continue;
 
                 // Detect stage boundary: "Stage 1:", "Stage 2:", etc.
                 if (trimmed.matches("(?i)^Stage\\s+\\d+\\s*:.*")) {
@@ -266,18 +270,19 @@ public class Form2GeneratorService {
     /**
      * Parses a stage text into main claim text + optional sub-bullets.
      * Example input:
-     *   "Risk Classification: Risks are classified into:
-     *    Low Risk
-     *    Moderate Risk
-     *    High Risk
-     *    Critical Risk"
+     * "Risk Classification: Risks are classified into:
+     * Low Risk
+     * Moderate Risk
+     * High Risk
+     * Critical Risk"
      *
      * Returns:
-     *   text = "Risk Classification: Risks are classified into:"
-     *   subBullets = ["Low Risk", "Moderate Risk", "High Risk", "Critical Risk"]
+     * text = "Risk Classification: Risks are classified into:"
+     * subBullets = ["Low Risk", "Moderate Risk", "High Risk", "Critical Risk"]
      */
     private ClaimEntry parseStageAsClaim(String stageText) {
-        if (stageText == null || stageText.isBlank()) return null;
+        if (stageText == null || stageText.isBlank())
+            return null;
 
         String[] lines = stageText.split("\n");
         String mainText = lines[0].trim();
@@ -304,7 +309,7 @@ public class Form2GeneratorService {
     }
 
     private void insertParagraph(XWPFDocument doc, XWPFParagraph beforeThis,
-                                 String text, boolean bold, boolean italic, int fontSize) {
+            String text, boolean bold, boolean italic, int fontSize) {
         XWPFParagraph newPara = doc.insertNewParagraph(beforeThis.getCTP().newCursor());
         XWPFRun run = newPara.createRun();
         run.setText(text);
@@ -320,7 +325,7 @@ public class Form2GeneratorService {
     // ------------------------------------------------------------------
 
     private void copySectionFromSource(XWPFDocument targetDoc, XWPFDocument sourceDoc,
-                                       String placeholder, String startPatternStr, String endPatternStr) {
+            String placeholder, String startPatternStr, String endPatternStr) {
 
         XWPFParagraph targetPlaceholderPara = findParagraphContainingPlaceholder(targetDoc, placeholder);
         if (targetPlaceholderPara == null) {
@@ -340,7 +345,8 @@ public class Form2GeneratorService {
             if (el instanceof XWPFParagraph) {
                 XWPFParagraph sourcePara = (XWPFParagraph) el;
                 String text = sourcePara.getText();
-                if (text == null) text = "";
+                if (text == null)
+                    text = "";
 
                 if (!capturing) {
                     if (startPattern.matcher(text).find()) {
@@ -378,13 +384,13 @@ public class Form2GeneratorService {
     }
 
     private void copyParagraphToTarget(XWPFParagraph sourcePara, XWPFDocument targetDoc,
-                                       XWPFParagraph beforeThisPara) throws Exception {
+            XWPFParagraph beforeThisPara) throws Exception {
 
         XWPFParagraph newPara = targetDoc.insertNewParagraph(beforeThisPara.getCTP().newCursor());
 
         if (sourcePara.getCTP().getPPr() != null) {
-            newPara.getCTP().setPPr((org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr)
-                    sourcePara.getCTP().getPPr().copy());
+            newPara.getCTP().setPPr(
+                    (org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr) sourcePara.getCTP().getPPr().copy());
         }
 
         for (XWPFRun sourceRun : sourcePara.getRuns()) {
@@ -396,16 +402,19 @@ public class Form2GeneratorService {
             }
 
             String fontFamily = sourceRun.getFontFamily();
-            if (fontFamily != null) newRun.setFontFamily(fontFamily);
+            if (fontFamily != null)
+                newRun.setFontFamily(fontFamily);
 
             Double fontSize = sourceRun.getFontSizeAsDouble();
-            if (fontSize != null && fontSize > 0) newRun.setFontSize(fontSize);
+            if (fontSize != null && fontSize > 0)
+                newRun.setFontSize(fontSize);
 
             newRun.setBold(sourceRun.isBold());
             newRun.setItalic(sourceRun.isItalic());
 
             String color = sourceRun.getColor();
-            if (color != null) newRun.setColor(color);
+            if (color != null)
+                newRun.setColor(color);
 
             if (sourceRun.getUnderline() != null && sourceRun.getUnderline() != UnderlinePatterns.NONE) {
                 newRun.setUnderline(sourceRun.getUnderline());
@@ -427,8 +436,7 @@ public class Form2GeneratorService {
                             pictureType,
                             fileName != null ? fileName : "image",
                             widthEmu,
-                            heightEmu
-                    );
+                            heightEmu);
 
                     System.out.println("      🖼️ Copied image: " + fileName);
                 } catch (Exception ex) {
@@ -439,7 +447,7 @@ public class Form2GeneratorService {
     }
 
     private void copyTableToTarget(XWPFTable sourceTable, XWPFDocument targetDoc,
-                                   XWPFParagraph beforeThisPara) throws Exception {
+            XWPFParagraph beforeThisPara) throws Exception {
         XWPFTable newTable = targetDoc.insertNewTbl(beforeThisPara.getCTP().newCursor());
         newTable.getCTTbl().set(sourceTable.getCTTbl().copy());
     }
@@ -452,7 +460,8 @@ public class Form2GeneratorService {
         String plainText = getPlainTextFromXml(xmlContent);
         XWPFParagraph target = findParagraphContainingPlaceholder(document, placeholder);
 
-        if (target == null) return;
+        if (target == null)
+            return;
 
         if (plainText == null || plainText.trim().isEmpty()) {
             clearParagraphText(target);
@@ -461,7 +470,8 @@ public class Form2GeneratorService {
 
         String[] lines = plainText.split("\n");
         for (String line : lines) {
-            if (line.trim().isEmpty()) continue;
+            if (line.trim().isEmpty())
+                continue;
 
             XWPFParagraph newPara = document.insertNewParagraph(target.getCTP().newCursor());
             XWPFRun run = newPara.createRun();
@@ -477,11 +487,13 @@ public class Form2GeneratorService {
         }
 
         int pos = document.getPosOfParagraph(target);
-        if (pos >= 0) document.removeBodyElement(pos);
+        if (pos >= 0)
+            document.removeBodyElement(pos);
     }
 
     private String getPlainTextFromXml(String xmlContent) {
-        if (xmlContent == null || xmlContent.trim().isEmpty()) return "";
+        if (xmlContent == null || xmlContent.trim().isEmpty())
+            return "";
 
         String DELIMITER = "|||ELEMENT_SEPARATOR|||";
         String[] fragments = xmlContent.split(Pattern.quote(DELIMITER));
@@ -489,11 +501,14 @@ public class Form2GeneratorService {
         StringBuilder result = new StringBuilder();
 
         for (String fragment : fragments) {
-            if (fragment == null || fragment.trim().isEmpty()) continue;
+            if (fragment == null || fragment.trim().isEmpty())
+                continue;
 
             String xml = fragment;
-            if (xml.startsWith("P::")) xml = xml.substring(3);
-            else if (xml.startsWith("T::")) xml = xml.substring(3);
+            if (xml.startsWith("P::"))
+                xml = xml.substring(3);
+            else if (xml.startsWith("T::"))
+                xml = xml.substring(3);
 
             String plainText = xml.replaceAll("<[^>]+>", "").trim();
             plainText = plainText
@@ -513,14 +528,16 @@ public class Form2GeneratorService {
     }
 
     private boolean isLikelyHeading(String line) {
-        if (line == null || line.isEmpty()) return false;
-        if (line.length() > 100) return false;
+        if (line == null || line.isEmpty())
+            return false;
+        if (line.length() > 100)
+            return false;
 
         boolean isAllCaps = line.equals(line.toUpperCase());
-        boolean matchesHeadingPattern =
-                line.matches("(?i)^[0-9]+\\.?\\s*[A-Z].*")
-                        || line.matches("(?i)^(TECHNICAL FIELD|BACKGROUND|OBJECTIVES|SUMMARY|DESCRIPTION|CLAIMS|ABSTRACT|SYSTEM ARCHITECTURE|WORKFLOW METHODOLOGY|EXEMPLARY IMPLEMENTATION|UNIQUENESS|REFERENCES).*")
-                        || (isAllCaps && line.length() < 60);
+        boolean matchesHeadingPattern = line.matches("(?i)^[0-9]+\\.?\\s*[A-Z].*")
+                || line.matches(
+                        "(?i)^(TECHNICAL FIELD|BACKGROUND|OBJECTIVES|SUMMARY|DESCRIPTION|CLAIMS|ABSTRACT|SYSTEM ARCHITECTURE|WORKFLOW METHODOLOGY|EXEMPLARY IMPLEMENTATION|UNIQUENESS|REFERENCES).*")
+                || (isAllCaps && line.length() < 60);
 
         return matchesHeadingPattern;
     }
@@ -536,17 +553,16 @@ public class Form2GeneratorService {
 
         if (data.getApplicant() != null) {
             PatentFormResponse.ApplicantDTO applicant = data.getApplicant();
-            map.put("{applicantName}",        nullSafe(applicant.getName()));
+            map.put("{applicantName}", nullSafe(applicant.getName()));
             map.put("{applicantNationality}", nullSafe(applicant.getNationality(), "Indian"));
 
             if (applicant.getAddress() != null) {
                 PatentFormResponse.AddressDTO addr = applicant.getAddress();
-                String fullAddress =
-                        (notBlank(addr.getStreet())  ? addr.getStreet()  + ", " : "")
-                                + (notBlank(addr.getCity())    ? addr.getCity()    + ", " : "")
-                                + (notBlank(addr.getState())   ? addr.getState()   + ", " : "")
-                                + (notBlank(addr.getCountry()) ? addr.getCountry() : "India")
-                                + (notBlank(addr.getPincode()) ? " - " + addr.getPincode() : "");
+                String fullAddress = (notBlank(addr.getStreet()) ? addr.getStreet() + ", " : "")
+                        + (notBlank(addr.getCity()) ? addr.getCity() + ", " : "")
+                        + (notBlank(addr.getState()) ? addr.getState() + ", " : "")
+                        + (notBlank(addr.getCountry()) ? addr.getCountry() : "India")
+                        + (notBlank(addr.getPincode()) ? " - " + addr.getPincode() : "");
                 map.put("{applicantAddress}", fullAddress);
             } else {
                 map.put("{applicantAddress}", "");
@@ -573,7 +589,8 @@ public class Form2GeneratorService {
         if (data.getInventors() != null && !data.getInventors().isEmpty()) {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < data.getInventors().size(); i++) {
-                if (i > 0) sb.append("\t");
+                if (i > 0)
+                    sb.append("\t");
                 String name = data.getInventors().get(i).getName();
                 sb.append(name != null ? name.toUpperCase() : "");
             }
@@ -599,14 +616,17 @@ public class Form2GeneratorService {
     }
 
     private void replaceTextPlaceholders(XWPFParagraph paragraph, Map<String, String> replacements) {
-        if (paragraph == null) return;
+        if (paragraph == null)
+            return;
         List<XWPFRun> runs = paragraph.getRuns();
-        if (runs == null || runs.isEmpty()) return;
+        if (runs == null || runs.isEmpty())
+            return;
 
         StringBuilder sb = new StringBuilder();
         for (XWPFRun run : runs) {
             String text = run.getText(0);
-            if (text != null) sb.append(text);
+            if (text != null)
+                sb.append(text);
         }
 
         String fullText = sb.toString();
@@ -619,7 +639,8 @@ public class Form2GeneratorService {
             }
         }
 
-        if (!replacedAny) return;
+        if (!replacedAny)
+            return;
 
         XWPFRun baseRun = runs.get(0);
         String fontFamily = baseRun.getFontFamily();
@@ -638,17 +659,22 @@ public class Form2GeneratorService {
             for (int ti = 0; ti < tabParts.length; ti++) {
                 XWPFRun newRun = paragraph.createRun();
                 newRun.setText(tabParts[ti]);
-                if (fontFamily != null) newRun.setFontFamily(fontFamily);
-                if (fontSize != null && fontSize > 0) newRun.setFontSize(fontSize);
+                if (fontFamily != null)
+                    newRun.setFontFamily(fontFamily);
+                if (fontSize != null && fontSize > 0)
+                    newRun.setFontSize(fontSize);
                 newRun.setBold(isBold);
                 newRun.setItalic(isItalic);
-                if (color != null) newRun.setColor(color);
+                if (color != null)
+                    newRun.setColor(color);
 
-                if (ti < tabParts.length - 1) newRun.addTab();
+                if (ti < tabParts.length - 1)
+                    newRun.addTab();
             }
             if (li < lines.length - 1) {
                 XWPFRun brRun = paragraph.createRun();
-                if (fontFamily != null) brRun.setFontFamily(fontFamily);
+                if (fontFamily != null)
+                    brRun.setFontFamily(fontFamily);
                 brRun.addBreak();
             }
         }
@@ -676,12 +702,17 @@ public class Form2GeneratorService {
     }
 
     private String getOrdinalSuffix(int day) {
-        if (day >= 11 && day <= 13) return "th";
+        if (day >= 11 && day <= 13)
+            return "th";
         switch (day % 10) {
-            case 1: return "st";
-            case 2: return "nd";
-            case 3: return "rd";
-            default: return "th";
+            case 1:
+                return "st";
+            case 2:
+                return "nd";
+            case 3:
+                return "rd";
+            default:
+                return "th";
         }
     }
 

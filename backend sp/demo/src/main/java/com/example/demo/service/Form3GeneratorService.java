@@ -24,7 +24,7 @@ public class Form3GeneratorService {
 
     public byte[] generateForm3(PatentFormResponse data) {
 
-        ClassPathResource resource = new ClassPathResource("FORM3main.docx");
+        ClassPathResource resource = new ClassPathResource("FORM3MAIN.docx");
 
         if (!resource.exists()) {
             logger.error("❌ CRITICAL: Form-3.docx was NOT found inside src/main/resources/");
@@ -32,7 +32,7 @@ public class Form3GeneratorService {
         }
 
         try (InputStream is = resource.getInputStream();
-             XWPFDocument document = new XWPFDocument(is)) {
+                XWPFDocument document = new XWPFDocument(is)) {
 
             Map<String, String> replacements = buildReplacementsMap(data);
 
@@ -98,7 +98,8 @@ public class Form3GeneratorService {
             role = data.getPrincipal().getDesignation();
         }
         // Fallback just in case the frontend sends bad data again
-        if (role.isEmpty()) role = "Principal";
+        if (role.isEmpty())
+            role = "Principal";
         map.put("{role}", role);
 
         // 3. {college_name} - Standard casing
@@ -151,20 +152,27 @@ public class Form3GeneratorService {
         StringBuilder sb = new StringBuilder();
 
         List<String> line1 = new ArrayList<>();
-        if (notBlank(addr.getHouseNo())) line1.add(addr.getHouseNo());
-        if (notBlank(addr.getStreet())) line1.add(addr.getStreet());
-        if (!line1.isEmpty()) sb.append(String.join(", ", line1));
+        if (notBlank(addr.getHouseNo()))
+            line1.add(addr.getHouseNo());
+        if (notBlank(addr.getStreet()))
+            line1.add(addr.getStreet());
+        if (!line1.isEmpty())
+            sb.append(String.join(", ", line1));
 
         List<String> line2 = new ArrayList<>();
-        if (notBlank(addr.getCity())) line2.add(addr.getCity());
-        if (notBlank(addr.getDistrict())) line2.add(addr.getDistrict());
+        if (notBlank(addr.getCity()))
+            line2.add(addr.getCity());
+        if (notBlank(addr.getDistrict()))
+            line2.add(addr.getDistrict());
         if (!line2.isEmpty()) {
-            if (sb.length() > 0) sb.append("\n");
+            if (sb.length() > 0)
+                sb.append("\n");
             sb.append(String.join(", ", line2));
         }
 
         if (notBlank(addr.getState())) {
-            if (sb.length() > 0) sb.append("\n");
+            if (sb.length() > 0)
+                sb.append("\n");
             sb.append(addr.getState());
         }
 
@@ -179,7 +187,8 @@ public class Form3GeneratorService {
             countryLine.append(" - ").append(addr.getPincode());
         }
 
-        if (sb.length() > 0) sb.append("\n");
+        if (sb.length() > 0)
+            sb.append("\n");
         sb.append(countryLine);
 
         return sb.toString();
@@ -190,14 +199,17 @@ public class Form3GeneratorService {
     // ------------------------------------------------------------------
 
     private void replacePlaceholders(XWPFParagraph paragraph, Map<String, String> replacements) {
-        if (paragraph == null) return;
+        if (paragraph == null)
+            return;
         List<XWPFRun> runs = paragraph.getRuns();
-        if (runs == null || runs.isEmpty()) return;
+        if (runs == null || runs.isEmpty())
+            return;
 
         StringBuilder sb = new StringBuilder();
         for (XWPFRun run : runs) {
             String text = run.getText(0);
-            if (text != null) sb.append(text);
+            if (text != null)
+                sb.append(text);
         }
 
         String fullText = sb.toString();
@@ -210,7 +222,8 @@ public class Form3GeneratorService {
             }
         }
 
-        if (!replaced) return;
+        if (!replaced)
+            return;
 
         XWPFRun baseRun = runs.get(0);
         String fontFamily = baseRun.getFontFamily();
@@ -230,11 +243,14 @@ public class Form3GeneratorService {
             XWPFRun newRun = paragraph.createRun();
             newRun.setText(lines[i]);
 
-            if (fontFamily != null) newRun.setFontFamily(fontFamily);
-            if (fontSize != null && fontSize > 0) newRun.setFontSize(fontSize);
+            if (fontFamily != null)
+                newRun.setFontFamily(fontFamily);
+            if (fontSize != null && fontSize > 0)
+                newRun.setFontSize(fontSize);
             newRun.setBold(isBold);
             newRun.setItalic(isItalic);
-            if (color != null) newRun.setColor(color);
+            if (color != null)
+                newRun.setColor(color);
 
             // Important: Use addBreak() for real line breaks in Word
             if (i < lines.length - 1) {
@@ -248,12 +264,17 @@ public class Form3GeneratorService {
     // ------------------------------------------------------------------
 
     private String getOrdinalSuffix(int day) {
-        if (day >= 11 && day <= 13) return "th";
+        if (day >= 11 && day <= 13)
+            return "th";
         switch (day % 10) {
-            case 1: return "st";
-            case 2: return "nd";
-            case 3: return "rd";
-            default: return "th";
+            case 1:
+                return "st";
+            case 2:
+                return "nd";
+            case 3:
+                return "rd";
+            default:
+                return "th";
         }
     }
 

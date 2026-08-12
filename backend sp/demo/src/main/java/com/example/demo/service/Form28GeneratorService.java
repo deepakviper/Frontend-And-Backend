@@ -24,7 +24,7 @@ public class Form28GeneratorService {
 
     public byte[] generateForm28(PatentFormResponse data) {
 
-        ClassPathResource resource = new ClassPathResource("form28main2.docx");
+        ClassPathResource resource = new ClassPathResource("form28MAIN2.docx");
 
         if (!resource.exists()) {
             logger.error("❌ form28main1.docx not found in resources/");
@@ -32,7 +32,7 @@ public class Form28GeneratorService {
         }
 
         try (InputStream is = resource.getInputStream();
-             XWPFDocument document = new XWPFDocument(is)) {
+                XWPFDocument document = new XWPFDocument(is)) {
 
             Map<String, String> replacements = buildReplacementsMap(data);
 
@@ -107,7 +107,8 @@ public class Form28GeneratorService {
         // ✅ FIXED: Hardcoded strictly to "Principal" as you requested
         map.put("{role}", "Principal");
 
-        // ✅ FIXED: Hardcoded strictly to "Jeppiaar Institute of Technology" as you requested
+        // ✅ FIXED: Hardcoded strictly to "Jeppiaar Institute of Technology" as you
+        // requested
         map.put("{clg_name}", "Jeppiaar Institute of Technology");
 
         // ✅ Today's Date with ordinal (09th August 2026)
@@ -152,22 +153,29 @@ public class Form28GeneratorService {
 
         // Include HouseNo and Street
         List<String> line1 = new ArrayList<>();
-        if (notBlank(addr.getHouseNo())) line1.add(addr.getHouseNo());
-        if (notBlank(addr.getStreet())) line1.add(addr.getStreet());
-        if (!line1.isEmpty()) sb.append(String.join(", ", line1));
+        if (notBlank(addr.getHouseNo()))
+            line1.add(addr.getHouseNo());
+        if (notBlank(addr.getStreet()))
+            line1.add(addr.getStreet());
+        if (!line1.isEmpty())
+            sb.append(String.join(", ", line1));
 
         // Include City and District
         List<String> line2 = new ArrayList<>();
-        if (notBlank(addr.getCity())) line2.add(addr.getCity());
-        if (notBlank(addr.getDistrict())) line2.add(addr.getDistrict());
+        if (notBlank(addr.getCity()))
+            line2.add(addr.getCity());
+        if (notBlank(addr.getDistrict()))
+            line2.add(addr.getDistrict());
         if (!line2.isEmpty()) {
-            if (sb.length() > 0) sb.append("\n");
+            if (sb.length() > 0)
+                sb.append("\n");
             sb.append(String.join(", ", line2));
         }
 
         // State
         if (notBlank(addr.getState())) {
-            if (sb.length() > 0) sb.append("\n");
+            if (sb.length() > 0)
+                sb.append("\n");
             sb.append(addr.getState());
         }
 
@@ -183,7 +191,8 @@ public class Form28GeneratorService {
             countryLine.append(" - ").append(addr.getPincode());
         }
 
-        if (sb.length() > 0) sb.append("\n");
+        if (sb.length() > 0)
+            sb.append("\n");
         sb.append(countryLine);
 
         return sb.toString();
@@ -195,14 +204,17 @@ public class Form28GeneratorService {
 
     private void replacePlaceholders(XWPFParagraph paragraph, Map<String, String> replacements) {
 
-        if (paragraph == null) return;
+        if (paragraph == null)
+            return;
         List<XWPFRun> runs = paragraph.getRuns();
-        if (runs == null || runs.isEmpty()) return;
+        if (runs == null || runs.isEmpty())
+            return;
 
         StringBuilder sb = new StringBuilder();
         for (XWPFRun run : runs) {
             String text = run.getText(0);
-            if (text != null) sb.append(text);
+            if (text != null)
+                sb.append(text);
         }
 
         String fullText = sb.toString();
@@ -215,7 +227,8 @@ public class Form28GeneratorService {
             }
         }
 
-        if (!replaced) return;
+        if (!replaced)
+            return;
 
         XWPFRun baseRun = runs.get(0);
 
@@ -235,11 +248,14 @@ public class Form28GeneratorService {
             XWPFRun newRun = paragraph.createRun();
             newRun.setText(lines[i]);
 
-            if (fontFamily != null) newRun.setFontFamily(fontFamily);
-            if (fontSize != null && fontSize > 0) newRun.setFontSize(fontSize);
+            if (fontFamily != null)
+                newRun.setFontFamily(fontFamily);
+            if (fontSize != null && fontSize > 0)
+                newRun.setFontSize(fontSize);
             newRun.setBold(isBold);
             newRun.setItalic(isItalic);
-            if (color != null) newRun.setColor(color);
+            if (color != null)
+                newRun.setColor(color);
 
             if (i < lines.length - 1) {
                 newRun.addBreak();
@@ -252,12 +268,17 @@ public class Form28GeneratorService {
     // ------------------------------------------------------------------
 
     private String getOrdinalSuffix(int day) {
-        if (day >= 11 && day <= 13) return "th";
+        if (day >= 11 && day <= 13)
+            return "th";
         switch (day % 10) {
-            case 1: return "st";
-            case 2: return "nd";
-            case 3: return "rd";
-            default: return "th";
+            case 1:
+                return "st";
+            case 2:
+                return "nd";
+            case 3:
+                return "rd";
+            default:
+                return "th";
         }
     }
 

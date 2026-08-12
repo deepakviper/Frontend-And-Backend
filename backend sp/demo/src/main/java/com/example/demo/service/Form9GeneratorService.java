@@ -26,7 +26,7 @@ public class Form9GeneratorService {
         System.out.println("Title: " + data.getTitleOfInvention());
         System.out.println("============================================");
 
-        ClassPathResource resource = new ClassPathResource("form 9main.docx");
+        ClassPathResource resource = new ClassPathResource("form 9MAIN.docx");
 
         if (!resource.exists()) {
             logger.error("❌ form 9main.docx not found in resources/");
@@ -34,7 +34,7 @@ public class Form9GeneratorService {
         }
 
         try (InputStream is = resource.getInputStream();
-             XWPFDocument document = new XWPFDocument(is)) {
+                XWPFDocument document = new XWPFDocument(is)) {
 
             Map<String, String> replacements = buildReplacementsMap(data);
 
@@ -109,7 +109,8 @@ public class Form9GeneratorService {
         if (data.getInventors() != null && !data.getInventors().isEmpty()) {
             StringBuilder verticalNames = new StringBuilder();
             for (int i = 0; i < data.getInventors().size(); i++) {
-                if (i > 0) verticalNames.append("\n");
+                if (i > 0)
+                    verticalNames.append("\n");
                 String name = data.getInventors().get(i).getName();
                 verticalNames.append(name != null ? name.toUpperCase() : "");
             }
@@ -118,7 +119,8 @@ public class Form9GeneratorService {
             // 7. Inventor names — HORIZONTAL (comma-separated) for sentence
             StringBuilder horizontalNames = new StringBuilder();
             for (int i = 0; i < data.getInventors().size(); i++) {
-                if (i > 0) horizontalNames.append(", ");
+                if (i > 0)
+                    horizontalNames.append(", ");
                 String name = data.getInventors().get(i).getName();
                 horizontalNames.append(name != null ? name.toUpperCase() : "");
             }
@@ -147,10 +149,10 @@ public class Form9GeneratorService {
     /**
      * Builds multi-line address for {inv_address} placeholder.
      * Example output:
-     *   Kunnam, Sunguvarchatram
-     *   Sriperumbudur
-     *   Tamil Nadu
-     *   India - 631604
+     * Kunnam, Sunguvarchatram
+     * Sriperumbudur
+     * Tamil Nadu
+     * India - 631604
      */
     private String buildMultiLineAddress(PatentFormResponse data) {
         if (data.getApplicant() == null || data.getApplicant().getAddress() == null) {
@@ -167,13 +169,15 @@ public class Form9GeneratorService {
 
         // Line 2: City
         if (notBlank(addr.getCity())) {
-            if (sb.length() > 0) sb.append("\n");
+            if (sb.length() > 0)
+                sb.append("\n");
             sb.append(addr.getCity());
         }
 
         // Line 3: State
         if (notBlank(addr.getState())) {
-            if (sb.length() > 0) sb.append("\n");
+            if (sb.length() > 0)
+                sb.append("\n");
             sb.append(addr.getState());
         }
 
@@ -188,7 +192,8 @@ public class Form9GeneratorService {
             countryLine.append(" - ").append(addr.getPincode());
         }
 
-        if (sb.length() > 0) sb.append("\n");
+        if (sb.length() > 0)
+            sb.append("\n");
         sb.append(countryLine);
 
         return sb.toString();
@@ -199,15 +204,18 @@ public class Form9GeneratorService {
     // ------------------------------------------------------------------
 
     private void replacePlaceholders(XWPFParagraph paragraph, Map<String, String> replacements) {
-        if (paragraph == null) return;
+        if (paragraph == null)
+            return;
         List<XWPFRun> runs = paragraph.getRuns();
-        if (runs == null || runs.isEmpty()) return;
+        if (runs == null || runs.isEmpty())
+            return;
 
         // Merge all runs into one string to detect split placeholders
         StringBuilder sb = new StringBuilder();
         for (XWPFRun run : runs) {
             String text = run.getText(0);
-            if (text != null) sb.append(text);
+            if (text != null)
+                sb.append(text);
         }
 
         String fullText = sb.toString();
@@ -220,7 +228,8 @@ public class Form9GeneratorService {
             }
         }
 
-        if (!replacedAny) return;
+        if (!replacedAny)
+            return;
 
         // Preserve first run formatting
         XWPFRun baseRun = runs.get(0);
@@ -240,11 +249,14 @@ public class Form9GeneratorService {
         for (int li = 0; li < lines.length; li++) {
             XWPFRun newRun = paragraph.createRun();
             newRun.setText(lines[li]);
-            if (fontFamily != null) newRun.setFontFamily(fontFamily);
-            if (fontSize != null && fontSize > 0) newRun.setFontSize(fontSize);
+            if (fontFamily != null)
+                newRun.setFontFamily(fontFamily);
+            if (fontSize != null && fontSize > 0)
+                newRun.setFontSize(fontSize);
             newRun.setBold(isBold);
             newRun.setItalic(isItalic);
-            if (color != null) newRun.setColor(color);
+            if (color != null)
+                newRun.setColor(color);
 
             // Add real Word line break between lines
             if (li < lines.length - 1) {
@@ -258,12 +270,17 @@ public class Form9GeneratorService {
     // ------------------------------------------------------------------
 
     private String getOrdinalSuffix(int day) {
-        if (day >= 11 && day <= 13) return "th";
+        if (day >= 11 && day <= 13)
+            return "th";
         switch (day % 10) {
-            case 1: return "st";
-            case 2: return "nd";
-            case 3: return "rd";
-            default: return "th";
+            case 1:
+                return "st";
+            case 2:
+                return "nd";
+            case 3:
+                return "rd";
+            default:
+                return "th";
         }
     }
 

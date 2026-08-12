@@ -34,8 +34,7 @@ public class DocumentGeneratorService {
         // 1. TITLE EXTRACTION
         Pattern titlePattern = Pattern.compile(
                 "(?i)title of the[^\\n:]*:\\s*(.*?)\\s*(?=\\n\\s*name|\\n\\s*abstract|$)",
-                Pattern.DOTALL
-        );
+                Pattern.DOTALL);
         Matcher titleMatcher = titlePattern.matcher(cleanContent);
         if (titleMatcher.find()) {
             response.setTitleOfInvention(titleMatcher.group(1).trim().replace("\n", " "));
@@ -60,7 +59,8 @@ public class DocumentGeneratorService {
 
                 for (String line : lines) {
                     String trimmedLine = line.trim();
-                    if (trimmedLine.isEmpty()) continue;
+                    if (trimmedLine.isEmpty())
+                        continue;
 
                     Matcher pinMatcher = pincodePattern.matcher(trimmedLine);
 
@@ -99,7 +99,8 @@ public class DocumentGeneratorService {
                     if (addressParts.length >= 4) {
                         StringBuilder streetBuilder = new StringBuilder();
                         for (int i = 0; i < addressParts.length - 3; i++) {
-                            if (!streetBuilder.isEmpty()) streetBuilder.append(", ");
+                            if (!streetBuilder.isEmpty())
+                                streetBuilder.append(", ");
                             streetBuilder.append(addressParts[i]);
                         }
                         street = streetBuilder.toString();
@@ -149,7 +150,7 @@ public class DocumentGeneratorService {
                         data.getInventors().get(i).getName());
             }
         }
-        ClassPathResource resource = new ClassPathResource("Form1mai.docx");
+        ClassPathResource resource = new ClassPathResource("FORM1mai.docx");
 
         if (!resource.exists()) {
             System.out.println("❌ ERROR: Form1mai.docx was not found inside resources/");
@@ -157,7 +158,7 @@ public class DocumentGeneratorService {
         }
 
         try (InputStream is = resource.getInputStream();
-             XWPFDocument document = new XWPFDocument(is)) {
+                XWPFDocument document = new XWPFDocument(is)) {
 
             // 1. Process standalone paragraphs (outside tables)
             if (document.getParagraphs() != null) {
@@ -191,12 +192,13 @@ public class DocumentGeneratorService {
 
     private void processInventorAwareTable(XWPFTable table, PatentFormResponse data) {
         List<XWPFTableRow> rows = table.getRows();
-        if (rows == null || rows.isEmpty()) return;
+        if (rows == null || rows.isEmpty())
+            return;
 
-        int nameRowIndex   = findRowIndexContainingToken(rows, "{{INV_NAME}}");
+        int nameRowIndex = findRowIndexContainingToken(rows, "{{INV_NAME}}");
         int streetRowIndex = findRowIndexContainingToken(rows, "{{INV_STREET}}");
 
-        boolean hasInventorNameToken       = nameRowIndex != -1;
+        boolean hasInventorNameToken = nameRowIndex != -1;
         boolean isUnifiedSingleRowTemplate = hasInventorNameToken
                 && streetRowIndex != -1
                 && streetRowIndex == nameRowIndex;
@@ -217,7 +219,7 @@ public class DocumentGeneratorService {
     }
 
     private int processUnifiedInventorRow(XWPFTable table, int rowIndex,
-                                          XWPFTableRow sourceRow, PatentFormResponse data) {
+            XWPFTableRow sourceRow, PatentFormResponse data) {
         List<PatentFormResponse.InventorDTO> inventors = data.getInventors();
 
         if (inventors == null || inventors.isEmpty()) {
@@ -266,7 +268,8 @@ public class DocumentGeneratorService {
         for (int i = 0; i < rows.size(); i++) {
             for (XWPFTableCell cell : rows.get(i).getTableCells()) {
                 String text = cell.getText();
-                if (text != null && text.contains(token)) return i;
+                if (text != null && text.contains(token))
+                    return i;
             }
         }
         return -1;
@@ -277,8 +280,8 @@ public class DocumentGeneratorService {
     // -------------------------------------------------------------------------
 
     private void processParagraph(XWPFParagraph paragraph,
-                                  PatentFormResponse data,
-                                  PatentFormResponse.InventorDTO specificInventor) {
+            PatentFormResponse data,
+            PatentFormResponse.InventorDTO specificInventor) {
 
         if (paragraph == null
                 || paragraph.getText() == null
@@ -294,18 +297,18 @@ public class DocumentGeneratorService {
         if (data.getApplicant() != null) {
             PatentFormResponse.ApplicantDTO applicant = data.getApplicant();
 
-            replaceTextInParagraph(paragraph, "{{APP_NAME}}",    applicant.getName());
+            replaceTextInParagraph(paragraph, "{{APP_NAME}}", applicant.getName());
             replaceTextInParagraph(paragraph, "{{NATIONALITY}}", applicant.getNationality());
-            replaceTextInParagraph(paragraph, "{{RES_CO}}",      applicant.getCountry());
+            replaceTextInParagraph(paragraph, "{{RES_CO}}", applicant.getCountry());
 
             if (applicant.getAddress() != null) {
                 PatentFormResponse.AddressDTO address = applicant.getAddress();
                 replaceTextInParagraph(paragraph, "{{HOUSE_NO}}", address.getHouseNo());
-                replaceTextInParagraph(paragraph, "{{STREET}}",   address.getStreet());
-                replaceTextInParagraph(paragraph, "{{CITY}}",     address.getCity());
-                replaceTextInParagraph(paragraph, "{{STATE}}",    address.getState());
-                replaceTextInParagraph(paragraph, "{{COUNTRY}}",  address.getCountry());
-                replaceTextInParagraph(paragraph, "{{PINCODE}}",  address.getPincode());
+                replaceTextInParagraph(paragraph, "{{STREET}}", address.getStreet());
+                replaceTextInParagraph(paragraph, "{{CITY}}", address.getCity());
+                replaceTextInParagraph(paragraph, "{{STATE}}", address.getState());
+                replaceTextInParagraph(paragraph, "{{COUNTRY}}", address.getCountry());
+                replaceTextInParagraph(paragraph, "{{PINCODE}}", address.getPincode());
             }
         }
 
@@ -317,7 +320,6 @@ public class DocumentGeneratorService {
             userCity = data.getApplicant().getAddress().getCity().trim();
         }
         replacePatentOfficeLine(paragraph, userCity);
-
 
         // 3. Single-inventor row mapping (Unified / cloned-row route)
         if (specificInventor != null) {
@@ -331,9 +333,9 @@ public class DocumentGeneratorService {
         // 4. Split-template fallback — stitch all inventors into one cell (vertical)
         else if (data.getInventors() != null && !data.getInventors().isEmpty()) {
             List<PatentFormResponse.InventorDTO> inventors = data.getInventors();
-            StringBuilder namesBuilder         = new StringBuilder();
+            StringBuilder namesBuilder = new StringBuilder();
             StringBuilder nationalitiesBuilder = new StringBuilder();
-            StringBuilder countriesBuilder     = new StringBuilder();
+            StringBuilder countriesBuilder = new StringBuilder();
 
             for (int i = 0; i < inventors.size(); i++) {
                 PatentFormResponse.InventorDTO inventor = inventors.get(i);
@@ -347,39 +349,39 @@ public class DocumentGeneratorService {
                 countriesBuilder.append(inventor.getCountry() != null ? inventor.getCountry() : "India");
             }
 
-            replaceTextInParagraph(paragraph, "{{INV_NAME}}",    namesBuilder.toString());
-            replaceTextInParagraph(paragraph, "{{INV_NAT}}",     nationalitiesBuilder.toString());
+            replaceTextInParagraph(paragraph, "{{INV_NAME}}", namesBuilder.toString());
+            replaceTextInParagraph(paragraph, "{{INV_NAT}}", nationalitiesBuilder.toString());
             replaceTextInParagraph(paragraph, "{{INV_COUNTRY}}", countriesBuilder.toString());
         }
 
         // 5. Shared inventor address placeholders
         if (data.getApplicant() != null && data.getApplicant().getAddress() != null) {
             PatentFormResponse.AddressDTO addr = data.getApplicant().getAddress();
-            replaceTextInParagraph(paragraph, "{{INV_HOUSE_NO}}",     addr.getHouseNo());
-            replaceTextInParagraph(paragraph, "{{INV_STREET}}",       addr.getStreet());
-            replaceTextInParagraph(paragraph, "{{INV_CITY}}",         addr.getCity());
-            replaceTextInParagraph(paragraph, "{{INV_STATE}}",        addr.getState());
+            replaceTextInParagraph(paragraph, "{{INV_HOUSE_NO}}", addr.getHouseNo());
+            replaceTextInParagraph(paragraph, "{{INV_STREET}}", addr.getStreet());
+            replaceTextInParagraph(paragraph, "{{INV_CITY}}", addr.getCity());
+            replaceTextInParagraph(paragraph, "{{INV_STATE}}", addr.getState());
             replaceTextInParagraph(paragraph, "{{INV_COUNTRY_ADDR}}", addr.getCountry());
-            replaceTextInParagraph(paragraph, "{{INV_PIN}}",          addr.getPincode());
+            replaceTextInParagraph(paragraph, "{{INV_PIN}}", addr.getPincode());
         }
 
         // 6. Principal details — from frontend input
         if (data.getPrincipal() != null) {
             PatentFormResponse.PrincipalDTO principal = data.getPrincipal();
 
-            replaceTextInParagraph(paragraph, "{{SERVICE_NAME}}",   principal.getName());
-            replaceTextInParagraph(paragraph, "{{SERVICE_TEL}}",    principal.getTelephone());
+            replaceTextInParagraph(paragraph, "{{SERVICE_NAME}}", principal.getName());
+            replaceTextInParagraph(paragraph, "{{SERVICE_TEL}}", principal.getTelephone());
             replaceTextInParagraph(paragraph, "{{SERVICE_MOBILE}}", principal.getMobile());
-            replaceTextInParagraph(paragraph, "{{SERVICE_FAX}}",    principal.getFax());
-            replaceTextInParagraph(paragraph, "{{SERVICE_EMAIL}}",  principal.getEmail());
+            replaceTextInParagraph(paragraph, "{{SERVICE_FAX}}", principal.getFax());
+            replaceTextInParagraph(paragraph, "{{SERVICE_EMAIL}}", principal.getEmail());
 
             if (data.getApplicant() != null && data.getApplicant().getAddress() != null) {
                 PatentFormResponse.AddressDTO addr = data.getApplicant().getAddress();
 
                 String fullPostalAddress = principal.getName()
-                        + (addr.getStreet()  != null && !addr.getStreet().isEmpty()  ? ", " + addr.getStreet()  : "")
-                        + (addr.getCity()    != null && !addr.getCity().isEmpty()    ? ", " + addr.getCity()    : "")
-                        + (addr.getState()   != null && !addr.getState().isEmpty()   ? ", " + addr.getState()   : "")
+                        + (addr.getStreet() != null && !addr.getStreet().isEmpty() ? ", " + addr.getStreet() : "")
+                        + (addr.getCity() != null && !addr.getCity().isEmpty() ? ", " + addr.getCity() : "")
+                        + (addr.getState() != null && !addr.getState().isEmpty() ? ", " + addr.getState() : "")
                         + (addr.getCountry() != null && !addr.getCountry().isEmpty() ? ", " + addr.getCountry() : "")
                         + (addr.getPincode() != null && !addr.getPincode().isEmpty() ? " - " + addr.getPincode() : "");
 
@@ -405,7 +407,8 @@ public class DocumentGeneratorService {
             List<PatentFormResponse.InventorDTO> inventors = data.getInventors();
 
             for (int i = 0; i < inventors.size(); i++) {
-                if (i > 0) signaturesBuilder.append("\t");
+                if (i > 0)
+                    signaturesBuilder.append("\t");
                 String name = inventors.get(i).getName();
                 signaturesBuilder.append(name != null ? name.toUpperCase() : "");
             }
@@ -416,7 +419,6 @@ public class DocumentGeneratorService {
 
             replaceTextInParagraph(paragraph, "{{INVENTOR_NAME}}", signaturesBuilder.toString());
         }
-
 
         // 9. Document metadata — attachments
         if (data.getAttachments() != null) {
@@ -434,30 +436,33 @@ public class DocumentGeneratorService {
     // -------------------------------------------------------------------------
 
     private void replaceTextInParagraph(XWPFParagraph paragraph,
-                                        String targetToken,
-                                        String replacementValue) {
+            String targetToken,
+            String replacementValue) {
         List<XWPFRun> runs = paragraph.getRuns();
-        if (runs == null || runs.isEmpty()) return;
+        if (runs == null || runs.isEmpty())
+            return;
 
         // Stitch all runs into one string to detect tokens split across runs
         StringBuilder sb = new StringBuilder();
         for (XWPFRun run : runs) {
             String text = run.getText(0);
-            if (text != null) sb.append(text);
+            if (text != null)
+                sb.append(text);
         }
 
         String fullText = sb.toString();
-        if (!fullText.contains(targetToken)) return;
+        if (!fullText.contains(targetToken))
+            return;
 
-        String valueToUse  = replacementValue != null ? replacementValue : "";
+        String valueToUse = replacementValue != null ? replacementValue : "";
         String updatedText = fullText.replace(targetToken, valueToUse);
 
         // Preserve base run formatting from the first run
-        XWPFRun baseRun  = runs.get(0);
-        String  fontName = baseRun.getFontFamily() != null ? baseRun.getFontFamily() : "Arial";
-        Double  fontSize = baseRun.getFontSizeAsDouble();
-        boolean isBold   = baseRun.isBold();
-        String  color    = baseRun.getColor();
+        XWPFRun baseRun = runs.get(0);
+        String fontName = baseRun.getFontFamily() != null ? baseRun.getFontFamily() : "Arial";
+        Double fontSize = baseRun.getFontSizeAsDouble();
+        boolean isBold = baseRun.isBold();
+        String color = baseRun.getColor();
 
         // Remove all existing runs cleanly
         for (int i = runs.size() - 1; i >= 0; i--) {
@@ -475,9 +480,11 @@ public class DocumentGeneratorService {
                 XWPFRun newRun = paragraph.createRun();
                 newRun.setText(tabParts[t]);
                 newRun.setFontFamily(fontName);
-                if (fontSize != null && fontSize > 0) newRun.setFontSize(fontSize);
+                if (fontSize != null && fontSize > 0)
+                    newRun.setFontSize(fontSize);
                 newRun.setBold(isBold);
-                if (color != null) newRun.setColor(color);
+                if (color != null)
+                    newRun.setColor(color);
 
                 // ✅ Add real Word tab character after each segment except the last
                 if (t < tabParts.length - 1) {
@@ -499,23 +506,31 @@ public class DocumentGeneratorService {
     // -------------------------------------------------------------------------
 
     private String getDayOrdinalSuffix(int day) {
-        if (day >= 11 && day <= 13) return "th";
+        if (day >= 11 && day <= 13)
+            return "th";
         switch (day % 10) {
-            case 1:  return "st";
-            case 2:  return "nd";
-            case 3:  return "rd";
-            default: return "th";
+            case 1:
+                return "st";
+            case 2:
+                return "nd";
+            case 3:
+                return "rd";
+            default:
+                return "th";
         }
     }
 
     private void replacePatentOfficeLine(XWPFParagraph paragraph, String userCity) {
-        if (paragraph == null || paragraph.getText() == null) return;
+        if (paragraph == null || paragraph.getText() == null)
+            return;
         String fullText = paragraph.getText();
-        if (!fullText.contains("Patent Office")) return;
+        if (!fullText.contains("Patent Office"))
+            return;
 
         String cityToUse = (userCity != null && !userCity.trim().isEmpty()) ? userCity.trim() : "Chennai";
 
-        // Regex matches "The Patent Office, at" followed by any ellipsis (U+2026) or dots/spaces
+        // Regex matches "The Patent Office, at" followed by any ellipsis (U+2026) or
+        // dots/spaces
         String targetRegex = "The Patent Office,\\s*at[\\u2026\\s.]*";
         if (fullText.matches(".*" + targetRegex + ".*")) {
             String updatedText = fullText.replaceAll(targetRegex, "The Patent Office, at " + cityToUse);
