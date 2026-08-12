@@ -24,14 +24,7 @@ public class Form3GeneratorService {
 
     public byte[] generateForm3(PatentFormResponse data) {
 
-        ClassPathResource resource = new ClassPathResource("FORM3MAIN.docx");
-
-        if (!resource.exists()) {
-            logger.error("❌ CRITICAL: Form-3.docx was NOT found inside src/main/resources/");
-            return new byte[0];
-        }
-
-        try (InputStream is = resource.getInputStream();
+        try (InputStream is = getTemplateInputStream("FORM3MAIN.docx");
                 XWPFDocument document = new XWPFDocument(is)) {
 
             Map<String, String> replacements = buildReplacementsMap(data);
@@ -280,5 +273,22 @@ public class Form3GeneratorService {
 
     private boolean notBlank(String s) {
         return s != null && !s.trim().isEmpty();
+    }
+
+    private InputStream getTemplateInputStream(String filename) throws Exception {
+        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(filename);
+        if (is == null) {
+            is = Form3GeneratorService.class.getClassLoader().getResourceAsStream(filename);
+        }
+        if (is == null) {
+            ClassPathResource cpr = new ClassPathResource(filename);
+            if (cpr.exists()) {
+                is = cpr.getInputStream();
+            }
+        }
+        if (is == null) {
+            throw new java.io.FileNotFoundException("Template file not found on classpath: " + filename);
+        }
+        return is;
     }
 }

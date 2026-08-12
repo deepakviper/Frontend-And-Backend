@@ -24,14 +24,7 @@ public class Form28GeneratorService {
 
     public byte[] generateForm28(PatentFormResponse data) {
 
-        ClassPathResource resource = new ClassPathResource("form28MAIN2.docx");
-
-        if (!resource.exists()) {
-            logger.error("❌ form28main1.docx not found in resources/");
-            return new byte[0];
-        }
-
-        try (InputStream is = resource.getInputStream();
+        try (InputStream is = getTemplateInputStream("form28MAIN2.docx");
                 XWPFDocument document = new XWPFDocument(is)) {
 
             Map<String, String> replacements = buildReplacementsMap(data);
@@ -284,5 +277,22 @@ public class Form28GeneratorService {
 
     private boolean notBlank(String s) {
         return s != null && !s.trim().isEmpty();
+    }
+
+    private InputStream getTemplateInputStream(String filename) throws Exception {
+        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(filename);
+        if (is == null) {
+            is = Form28GeneratorService.class.getClassLoader().getResourceAsStream(filename);
+        }
+        if (is == null) {
+            ClassPathResource cpr = new ClassPathResource(filename);
+            if (cpr.exists()) {
+                is = cpr.getInputStream();
+            }
+        }
+        if (is == null) {
+            throw new java.io.FileNotFoundException("Template file not found on classpath: " + filename);
+        }
+        return is;
     }
 }

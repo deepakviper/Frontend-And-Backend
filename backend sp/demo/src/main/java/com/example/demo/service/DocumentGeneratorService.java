@@ -150,14 +150,7 @@ public class DocumentGeneratorService {
                         data.getInventors().get(i).getName());
             }
         }
-        ClassPathResource resource = new ClassPathResource("FORM1mai.docx");
-
-        if (!resource.exists()) {
-            System.out.println("❌ ERROR: Form1mai.docx was not found inside resources/");
-            return new byte[0];
-        }
-
-        try (InputStream is = resource.getInputStream();
+        try (InputStream is = getTemplateInputStream("FORM1mai.docx");
                 XWPFDocument document = new XWPFDocument(is)) {
 
             // 1. Process standalone paragraphs (outside tables)
@@ -184,6 +177,23 @@ public class DocumentGeneratorService {
             e.printStackTrace();
             return new byte[0];
         }
+    }
+
+    private InputStream getTemplateInputStream(String filename) throws Exception {
+        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(filename);
+        if (is == null) {
+            is = DocumentGeneratorService.class.getClassLoader().getResourceAsStream(filename);
+        }
+        if (is == null) {
+            ClassPathResource cpr = new ClassPathResource(filename);
+            if (cpr.exists()) {
+                is = cpr.getInputStream();
+            }
+        }
+        if (is == null) {
+            throw new java.io.FileNotFoundException("Template file not found on classpath: " + filename);
+        }
+        return is;
     }
 
     // -------------------------------------------------------------------------

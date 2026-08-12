@@ -26,14 +26,7 @@ public class Form9GeneratorService {
         System.out.println("Title: " + data.getTitleOfInvention());
         System.out.println("============================================");
 
-        ClassPathResource resource = new ClassPathResource("form 9MAIN.docx");
-
-        if (!resource.exists()) {
-            logger.error("❌ form 9main.docx not found in resources/");
-            return new byte[0];
-        }
-
-        try (InputStream is = resource.getInputStream();
+        try (InputStream is = getTemplateInputStream("form 9MAIN.docx");
                 XWPFDocument document = new XWPFDocument(is)) {
 
             Map<String, String> replacements = buildReplacementsMap(data);
@@ -290,5 +283,22 @@ public class Form9GeneratorService {
 
     private boolean notBlank(String s) {
         return s != null && !s.trim().isEmpty();
+    }
+
+    private InputStream getTemplateInputStream(String filename) throws Exception {
+        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(filename);
+        if (is == null) {
+            is = Form9GeneratorService.class.getClassLoader().getResourceAsStream(filename);
+        }
+        if (is == null) {
+            ClassPathResource cpr = new ClassPathResource(filename);
+            if (cpr.exists()) {
+                is = cpr.getInputStream();
+            }
+        }
+        if (is == null) {
+            throw new java.io.FileNotFoundException("Template file not found on classpath: " + filename);
+        }
+        return is;
     }
 }

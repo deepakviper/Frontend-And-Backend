@@ -33,14 +33,7 @@ public class Form2GeneratorService {
                 + (sourceFileBytes != null ? "YES (" + sourceFileBytes.length + " bytes)" : "NO"));
         System.out.println("============================================");
 
-        ClassPathResource resource = new ClassPathResource("Form2MAIN.docx");
-
-        if (!resource.exists()) {
-            logger.error("❌ Form2,main .docx not found in resources/");
-            return new byte[0];
-        }
-
-        try (InputStream is = resource.getInputStream();
+        try (InputStream is = getTemplateInputStream("Form2MAIN.docx");
                 XWPFDocument targetDoc = new XWPFDocument(is)) {
 
             // 1. Text placeholders
@@ -726,5 +719,22 @@ public class Form2GeneratorService {
 
     private boolean notBlank(String s) {
         return s != null && !s.trim().isEmpty();
+    }
+
+    private InputStream getTemplateInputStream(String filename) throws Exception {
+        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(filename);
+        if (is == null) {
+            is = Form2GeneratorService.class.getClassLoader().getResourceAsStream(filename);
+        }
+        if (is == null) {
+            ClassPathResource cpr = new ClassPathResource(filename);
+            if (cpr.exists()) {
+                is = cpr.getInputStream();
+            }
+        }
+        if (is == null) {
+            throw new java.io.FileNotFoundException("Template file not found on classpath: " + filename);
+        }
+        return is;
     }
 }
