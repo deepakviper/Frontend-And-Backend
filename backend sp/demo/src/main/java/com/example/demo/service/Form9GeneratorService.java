@@ -95,12 +95,17 @@ public class Form9GeneratorService {
                 + " " + today.format(DateTimeFormatter.ofPattern("yyyy"));
         map.put("{date}", formattedDate);
 
-        // 5. Principal
+        // 5. Principal Name & Details
+        String principalName = "";
         if (data.getPrincipal() != null && notBlank(data.getPrincipal().getName())) {
-            map.put("{principal}", data.getPrincipal().getName());
-        } else {
-            map.put("{principal}", "");
+            principalName = data.getPrincipal().getName();
         }
+        map.put("{principal}", principalName);
+        map.put("{PRINCIPAL}", principalName.toUpperCase());
+
+        String principalDetails = buildPrincipalDetails(data);
+        map.put("{principal_details}", principalDetails);
+        map.put("{PRINCIPAL_DETAILS}", principalDetails);
 
         // 6. Inventor names — VERTICAL (each on new line) for table
         if (data.getInventors() != null && !data.getInventors().isEmpty()) {
@@ -192,6 +197,50 @@ public class Form9GeneratorService {
         if (sb.length() > 0)
             sb.append("\n");
         sb.append(countryLine);
+
+        return sb.toString();
+    }
+
+    /**
+     * Builds aligned multi-line Principal Details for {principal_details} placeholder.
+     * Example output:
+     * Name: Dr. V. Veerapandiyan
+     * Designation: Principal
+     * Telephone No.: 044-27159000
+     * Mobile No.: 9876543210
+     * Fax No.: 044-27159001
+     * Email ID: principal@jeppiaar.ac.in
+     */
+    private String buildPrincipalDetails(PatentFormResponse data) {
+        if (data == null || data.getPrincipal() == null) {
+            return "";
+        }
+        PatentFormResponse.PrincipalDTO principal = data.getPrincipal();
+        StringBuilder sb = new StringBuilder();
+
+        if (notBlank(principal.getName())) {
+            sb.append("Name: ").append(principal.getName().trim());
+        }
+        if (notBlank(principal.getDesignation())) {
+            if (sb.length() > 0) sb.append("\n");
+            sb.append("Designation: ").append(principal.getDesignation().trim());
+        }
+        if (notBlank(principal.getTelephone())) {
+            if (sb.length() > 0) sb.append("\n");
+            sb.append("Telephone No.: ").append(principal.getTelephone().trim());
+        }
+        if (notBlank(principal.getMobile())) {
+            if (sb.length() > 0) sb.append("\n");
+            sb.append("Mobile No.: ").append(principal.getMobile().trim());
+        }
+        if (notBlank(principal.getFax())) {
+            if (sb.length() > 0) sb.append("\n");
+            sb.append("Fax No.: ").append(principal.getFax().trim());
+        }
+        if (notBlank(principal.getEmail())) {
+            if (sb.length() > 0) sb.append("\n");
+            sb.append("Email ID: ").append(principal.getEmail().trim());
+        }
 
         return sb.toString();
     }

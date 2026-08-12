@@ -84,12 +84,17 @@ public class Form28GeneratorService {
 
         Map<String, String> map = new HashMap<>();
 
-        // ✅ Principal Name (from frontend input)
+        // ✅ Principal Name & Details (from frontend input)
+        String principalName = "";
         if (data.getPrincipal() != null && notBlank(data.getPrincipal().getName())) {
-            map.put("{principal}", data.getPrincipal().getName());
-        } else {
-            map.put("{principal}", "");
+            principalName = data.getPrincipal().getName();
         }
+        map.put("{principal}", principalName);
+        map.put("{PRINCIPAL}", principalName.toUpperCase());
+
+        String principalDetails = buildPrincipalDetails(data);
+        map.put("{principal_details}", principalDetails);
+        map.put("{PRINCIPAL_DETAILS}", principalDetails);
 
         // ✅ Nationality
         String nationality = "Indian";
@@ -101,12 +106,24 @@ public class Form28GeneratorService {
         // ✅ Address (multi-line)
         map.put("{address}", buildMultiLineAddress(data));
 
-        // ✅ FIXED: Hardcoded strictly to "Principal" as you requested
-        map.put("{role}", "Principal");
+        // ✅ Role (from user data / principal designation)
+        String role = "Principal";
+        if (data.getPrincipal() != null && notBlank(data.getPrincipal().getDesignation())) {
+            role = data.getPrincipal().getDesignation();
+        } else if (notBlank(data.getRole())) {
+            role = data.getRole();
+        }
+        map.put("{role}", role);
 
-        // ✅ FIXED: Hardcoded strictly to "Jeppiaar Institute of Technology" as you
-        // requested
-        map.put("{clg_name}", "Jeppiaar Institute of Technology");
+        // ✅ College Name (from user data / applicant name)
+        String clgName = "";
+        if (data.getApplicant() != null && notBlank(data.getApplicant().getName())) {
+            clgName = data.getApplicant().getName();
+        } else if (notBlank(data.getClgName())) {
+            clgName = data.getClgName();
+        }
+        map.put("{clg_name}", clgName);
+        map.put("{COLLEGE_NAME}", clgName.toUpperCase());
 
         // ✅ Today's Date with ordinal (09th August 2026)
         LocalDate today = LocalDate.now();
@@ -191,6 +208,50 @@ public class Form28GeneratorService {
         if (sb.length() > 0)
             sb.append("\n");
         sb.append(countryLine);
+
+        return sb.toString();
+    }
+
+    /**
+     * Builds aligned multi-line Principal Details for {principal_details} placeholder.
+     * Example output:
+     * Name: Dr. V. Veerapandiyan
+     * Designation: Principal
+     * Telephone No.: 044-27159000
+     * Mobile No.: 9876543210
+     * Fax No.: 044-27159001
+     * Email ID: principal@jeppiaar.ac.in
+     */
+    private String buildPrincipalDetails(PatentFormResponse data) {
+        if (data == null || data.getPrincipal() == null) {
+            return "";
+        }
+        PatentFormResponse.PrincipalDTO principal = data.getPrincipal();
+        StringBuilder sb = new StringBuilder();
+
+        if (notBlank(principal.getName())) {
+            sb.append("Name: ").append(principal.getName().trim());
+        }
+        if (notBlank(principal.getDesignation())) {
+            if (sb.length() > 0) sb.append("\n");
+            sb.append("Designation: ").append(principal.getDesignation().trim());
+        }
+        if (notBlank(principal.getTelephone())) {
+            if (sb.length() > 0) sb.append("\n");
+            sb.append("Telephone No.: ").append(principal.getTelephone().trim());
+        }
+        if (notBlank(principal.getMobile())) {
+            if (sb.length() > 0) sb.append("\n");
+            sb.append("Mobile No.: ").append(principal.getMobile().trim());
+        }
+        if (notBlank(principal.getFax())) {
+            if (sb.length() > 0) sb.append("\n");
+            sb.append("Fax No.: ").append(principal.getFax().trim());
+        }
+        if (notBlank(principal.getEmail())) {
+            if (sb.length() > 0) sb.append("\n");
+            sb.append("Email ID: ").append(principal.getEmail().trim());
+        }
 
         return sb.toString();
     }
