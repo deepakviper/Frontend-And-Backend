@@ -96,6 +96,20 @@ public class Form28GeneratorService {
         map.put("{principal_details}", principalDetails);
         map.put("{PRINCIPAL_DETAILS}", principalDetails);
 
+        // ✅ Double-curly brace Service placeholders for new templates
+        String addressStr = buildMultiLineAddress(data);
+        String principalTel = (data.getPrincipal() != null && notBlank(data.getPrincipal().getTelephone())) ? data.getPrincipal().getTelephone() : "";
+        String principalMob = (data.getPrincipal() != null && notBlank(data.getPrincipal().getMobile())) ? data.getPrincipal().getMobile() : "";
+        String principalFax = (data.getPrincipal() != null && notBlank(data.getPrincipal().getFax())) ? data.getPrincipal().getFax() : "";
+        String principalEmail = (data.getPrincipal() != null && notBlank(data.getPrincipal().getEmail())) ? data.getPrincipal().getEmail() : "";
+
+        map.put("{{SERVICE_NAME}}", principalName);
+        map.put("{{SERVICE_ADDRESS}}", addressStr);
+        map.put("{{SERVICE_TEL}}", principalTel);
+        map.put("{{SERVICE_MOBILE}}", principalMob);
+        map.put("{{SERVICE_FAX}}", principalFax);
+        map.put("{{SERVICE_EMAIL}}", principalEmail);
+
         // ✅ Nationality
         String nationality = "Indian";
         if (data.getApplicant() != null && notBlank(data.getApplicant().getNationality())) {

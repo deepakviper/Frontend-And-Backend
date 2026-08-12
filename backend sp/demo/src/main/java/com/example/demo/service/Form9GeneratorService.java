@@ -107,6 +107,19 @@ public class Form9GeneratorService {
         map.put("{principal_details}", principalDetails);
         map.put("{PRINCIPAL_DETAILS}", principalDetails);
 
+        // Double-curly brace Service placeholders for new templates
+        String principalTel = (data.getPrincipal() != null && notBlank(data.getPrincipal().getTelephone())) ? data.getPrincipal().getTelephone() : "";
+        String principalMob = (data.getPrincipal() != null && notBlank(data.getPrincipal().getMobile())) ? data.getPrincipal().getMobile() : "";
+        String principalFax = (data.getPrincipal() != null && notBlank(data.getPrincipal().getFax())) ? data.getPrincipal().getFax() : "";
+        String principalEmail = (data.getPrincipal() != null && notBlank(data.getPrincipal().getEmail())) ? data.getPrincipal().getEmail() : "";
+
+        map.put("{{SERVICE_NAME}}", principalName);
+        map.put("{{SERVICE_ADDRESS}}", address);
+        map.put("{{SERVICE_TEL}}", principalTel);
+        map.put("{{SERVICE_MOBILE}}", principalMob);
+        map.put("{{SERVICE_FAX}}", principalFax);
+        map.put("{{SERVICE_EMAIL}}", principalEmail);
+
         // 6. Inventor names — VERTICAL (each on new line) for table
         if (data.getInventors() != null && !data.getInventors().isEmpty()) {
             StringBuilder verticalNames = new StringBuilder();
