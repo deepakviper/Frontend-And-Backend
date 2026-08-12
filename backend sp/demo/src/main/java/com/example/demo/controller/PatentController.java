@@ -65,10 +65,10 @@ public class PatentController {
 
     // ------------------------------------------------------------------
     // /download — Generate filled patent form
-    //   - data (required)        → JSON blob of PatentFormResponse
+    //   - data (optional)        → JSON blob of PatentFormResponse
     //   - sourceFile (optional)  → source .docx (used only by Form 2)
     // ------------------------------------------------------------------
-    @PostMapping("/download")
+    @RequestMapping(value = "/download", method = {RequestMethod.GET, RequestMethod.POST})
     public ResponseEntity<byte[]> downloadFilledForm(
             @RequestParam(value = "data", required = false) String dataJson,
             @RequestParam(value = "sourceFile", required = false) MultipartFile sourceFile,
@@ -113,13 +113,14 @@ public class PatentController {
             else if ("form28".equalsIgnoreCase(formType)) {
                 documentBytes = form28Service.generateForm28(finalData);
                 filename = "Filled_Patent_Form_28.docx";
-            }else {
+            } else {
                 documentBytes = generatorService.generateFilledForm1(finalData);
                 filename = "Filled_Patent_Form_1.docx";
             }
 
             if (documentBytes == null || documentBytes.length == 0) {
-                return ResponseEntity.notFound().build();
+                System.err.println("❌ ERROR: Document generation failed or produced 0 bytes for formType: " + formType);
+                return ResponseEntity.internalServerError().build();
             }
 
             return ResponseEntity.ok()
