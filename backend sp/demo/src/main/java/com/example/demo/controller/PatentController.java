@@ -65,9 +65,36 @@ public class PatentController {
 
     // ------------------------------------------------------------------
     // /download — Generate filled patent form
-    //   - data (optional)        → JSON blob of PatentFormResponse
-    //   - sourceFile (optional)  → source .docx (used only by Form 2)
+    // Handles BOTH JSON bodies and multipart/form-data / query params
     // ------------------------------------------------------------------
+    @PostMapping(value = "/download", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<byte[]> downloadFilledFormJson(
+            @RequestBody java.util.Map<String, Object> payload,
+            @RequestParam(value = "formType", required = false) String formTypeParam) {
+        try {
+            String formType = formTypeParam;
+            if (formType == null || formType.isBlank()) {
+                if (payload.containsKey("formType")) {
+                    formType = String.valueOf(payload.get("formType"));
+                } else if (payload.containsKey("requestedForms") && payload.get("requestedForms") instanceof java.util.List) {
+                    java.util.List<?> list = (java.util.List<?>) payload.get("requestedForms");
+                    if (!list.isEmpty()) {
+                        formType = String.valueOf(list.get(0));
+                    }
+                }
+            }
+            if (formType == null || formType.isBlank()) {
+                formType = "form1";
+            }
+
+            PatentFormResponse finalData = objectMapper.convertValue(payload, PatentFormResponse.class);
+            return generateFormResponse(finalData, null, formType);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
     @RequestMapping(value = "/download", method = {RequestMethod.GET, RequestMethod.POST})
     public ResponseEntity<byte[]> downloadFilledForm(
             @RequestParam(value = "data", required = false) String dataJson,
@@ -80,37 +107,39 @@ public class PatentController {
             }
 
             PatentFormResponse finalData = objectMapper.readValue(dataJson, PatentFormResponse.class);
+            byte[] sourceFileBytes = (sourceFile != null && !sourceFile.isEmpty())
+                    ? sourceFile.getBytes()
+                    : null;
 
+            return generateFormResponse(finalData, sourceFileBytes, formType);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    private ResponseEntity<byte[]> generateFormResponse(PatentFormResponse finalData, byte[] sourceFileBytes, String formType) {
+        try {
             byte[] documentBytes;
             String filename;
 
             System.out.println("========== DOWNLOAD REQUEST ==========");
             System.out.println("Form type: " + formType);
-            System.out.println("Source file received: " + (sourceFile != null ? sourceFile.getOriginalFilename() : "NONE"));
             System.out.println("======================================");
 
-            // ✅ Added Form 9 to routing
             if ("form9".equalsIgnoreCase(formType)) {
                 documentBytes = form9Service.generateForm9(finalData);
                 filename = "Filled_Patent_Form_9.docx";
-
             } else if ("form5".equalsIgnoreCase(formType)) {
                 documentBytes = form5Service.generateForm5(finalData);
                 filename = "Filled_Patent_Form_5.docx";
-
             } else if ("form3".equalsIgnoreCase(formType)) {
                 documentBytes = form3Service.generateForm3(finalData);
                 filename = "Filled_Patent_Form_3.docx";
-
             } else if ("form2".equalsIgnoreCase(formType)) {
-                byte[] sourceFileBytes = (sourceFile != null && !sourceFile.isEmpty())
-                        ? sourceFile.getBytes()
-                        : null;
                 documentBytes = form2Service.generateForm2(finalData, sourceFileBytes);
                 filename = "Filled_Patent_Form_2.docx";
-
-            }
-            else if ("form28".equalsIgnoreCase(formType)) {
+            } else if ("form28".equalsIgnoreCase(formType)) {
                 documentBytes = form28Service.generateForm28(finalData);
                 filename = "Filled_Patent_Form_28.docx";
             } else {
@@ -128,7 +157,6 @@ public class PatentController {
                     .contentType(MediaType.parseMediaType(
                             "application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
                     .body(documentBytes);
-
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError().build();
