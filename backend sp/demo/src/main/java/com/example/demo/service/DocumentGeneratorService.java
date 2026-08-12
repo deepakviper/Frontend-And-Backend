@@ -544,18 +544,24 @@ public class DocumentGeneratorService {
         if (!fullText.contains("Patent Office"))
             return;
 
-        String cityToUse = (userCity != null && !userCity.trim().isEmpty()) ? userCity.trim() : "Chennai";
+        // 1. Clean up any existing duplicate "ChennaiChennai"
+        if (fullText.contains("ChennaiChennai")) {
+            replaceTextInParagraph(paragraph, "ChennaiChennai", "Chennai");
+            fullText = paragraph.getText();
+        }
 
-        // Regex matches "The Patent Office, at" followed by any ellipsis (U+2026) or
-        // dots/spaces
-        String targetRegex = "The Patent Office,\\s*at[\\u2026\\s.]*";
-        if (fullText.matches(".*" + targetRegex + ".*")) {
-            String updatedText = fullText.replaceAll(targetRegex, "The Patent Office, at " + cityToUse);
+        // 2. If it is already "The Patent Office, at Chennai", do not alter it
+        if (fullText.contains("The Patent Office, at Chennai")) {
+            return;
+        }
+
+        // 3. Otherwise replace placeholders like "The Patent Office, at....." with "The Patent Office, at Chennai"
+        String targetRegex = "The Patent Office,\\s*at[\\u2026\\s.]*(Chennai)*";
+        if (fullText.matches(".*The Patent Office,\\s*at.*")) {
+            String updatedText = fullText.replaceAll(targetRegex, "The Patent Office, at Chennai");
             replaceTextInParagraph(paragraph, fullText, updatedText);
-        } else if (fullText.contains("The Patent Office, at Chennai")) {
-            replaceTextInParagraph(paragraph, "The Patent Office, at Chennai", "The Patent Office, at " + cityToUse);
         } else if (fullText.contains("The Patent Office, Chennai")) {
-            replaceTextInParagraph(paragraph, "The Patent Office, Chennai", "The Patent Office, " + cityToUse);
+            replaceTextInParagraph(paragraph, "The Patent Office, Chennai", "The Patent Office, at Chennai");
         }
     }
 }
