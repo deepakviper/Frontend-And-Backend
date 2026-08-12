@@ -87,6 +87,7 @@ function UploadCard({ onDataParsed }) {
       }
 
       const parsedResponseData = await parseResponse.json();
+      console.log('📥 EXTRACTION API RESPONSE (UploadCard):', parsedResponseData);
       setHasData(true);
       if (onDataParsed) {
         onDataParsed(parsedResponseData, uploadedFile); 

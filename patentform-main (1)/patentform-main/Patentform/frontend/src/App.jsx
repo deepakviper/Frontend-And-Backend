@@ -8,6 +8,202 @@ import PrincipalDetailsCard from './components/PrincipalDetailsCard';
 import InventorsCard from './components/InventorsCard';
 import { getApiBaseUrl, fetchWithRetry } from './utils/apiConfig';
 
+// Helper to extract first non-empty string among candidates
+const getExtractValue = (...candidates) => {
+  for (const val of candidates) {
+    if (val !== undefined && val !== null && String(val).trim() !== '') {
+      return String(val).trim();
+    }
+  }
+  return null;
+};
+
+// Helper to safely merge single field: preference to extracted value if present, else keep existing
+const mergeField = (existingValue, ...candidates) => {
+  const extractedVal = getExtractValue(...candidates);
+  if (extractedVal !== null) {
+    return extractedVal;
+  }
+  return existingValue || '';
+};
+
+// Robust normalizer for API JSON response -> Frontend formData state
+const normalizeExtractedData = (extracted, existingFormData = {}) => {
+  if (!extracted || typeof extracted !== 'object') {
+    return existingFormData;
+  }
+
+  const applicant = extracted.applicant || {};
+  const applicantAddr = (applicant && applicant.address) || {};
+  const principal = extracted.principal || {};
+
+  // 1. College / Applicant Name (fullName / full_name / name / collegeName / applicantName / clgName)
+  const collegeName = mergeField(
+    existingFormData.collegeName,
+    applicant.name,
+    extracted.collegeName,
+    extracted.college_name,
+    extracted.applicantName,
+    extracted.applicant_name,
+    extracted.clgName,
+    extracted.clg_name,
+    extracted.fullName,
+    extracted.full_name,
+    extracted.name
+  );
+
+  // 2. House No
+  const houseNo = mergeField(
+    existingFormData.houseNo,
+    applicantAddr.houseNo,
+    applicantAddr.house_no,
+    extracted.houseNo,
+    extracted.house_no,
+    extracted.doorNo,
+    extracted.door_no
+  );
+
+  // 3. Street / Address (address / applicantAddress / street)
+  const street = mergeField(
+    existingFormData.street,
+    applicantAddr.street,
+    extracted.street,
+    extracted.address,
+    extracted.applicantAddress,
+    extracted.fullAddress,
+    extracted.full_address
+  );
+
+  // 4. City / District (city / district)
+  const city = mergeField(
+    existingFormData.city,
+    applicantAddr.city,
+    applicantAddr.district,
+    extracted.city,
+    extracted.district,
+    extracted.town
+  );
+
+  // 5. State (state / stateName)
+  const state = mergeField(
+    existingFormData.state,
+    applicantAddr.state,
+    extracted.state,
+    extracted.stateName,
+    extracted.state_name
+  );
+
+  // 6. Country / Nationality (nationality / country)
+  const country = mergeField(
+    existingFormData.country,
+    applicantAddr.country,
+    applicant.country,
+    extracted.country,
+    extracted.nationality,
+    applicant.nationality
+  );
+
+  // 7. Pincode (pincode / pinCode / postalCode / pin)
+  const pincode = mergeField(
+    existingFormData.pincode,
+    applicantAddr.pincode,
+    applicantAddr.pinCode,
+    applicantAddr.postalCode,
+    extracted.pincode,
+    extracted.pinCode,
+    extracted.postalCode,
+    extracted.pin,
+    extracted.pin_code
+  );
+
+  // 8. Principal Name (fullName / full_name / name / principalName)
+  const principalName = mergeField(
+    existingFormData.principalName,
+    principal.name,
+    extracted.principalName,
+    extracted.principal_name,
+    extracted.contactPerson,
+    extracted.contact_person
+  );
+
+  // 9. Telephone (phone / phoneNumber / mobile / telephone)
+  const telephone = mergeField(
+    existingFormData.telephone,
+    principal.telephone,
+    extracted.telephone,
+    extracted.phone,
+    extracted.phoneNumber,
+    extracted.phone_number
+  );
+
+  // 10. Mobile (phone / phoneNumber / mobile / telephone)
+  const mobile = mergeField(
+    existingFormData.mobile,
+    principal.mobile,
+    extracted.mobile,
+    extracted.mobileNumber,
+    extracted.mobile_number,
+    extracted.phone,
+    extracted.phoneNumber
+  );
+
+  // 11. Fax
+  const fax = mergeField(
+    existingFormData.fax,
+    principal.fax,
+    extracted.fax
+  );
+
+  // 12. Email (email / emailAddress / email_id)
+  const email = mergeField(
+    existingFormData.email,
+    principal.email,
+    applicant.email,
+    extracted.email,
+    extracted.emailAddress,
+    extracted.email_address,
+    extracted.emailId,
+    extracted.email_id
+  );
+
+  // 13. Inventors Array
+  let newInventors = [...(existingFormData.inventors || ['', '', ''])];
+  if (Array.isArray(extracted.inventors) && extracted.inventors.length > 0) {
+    const extractedNames = extracted.inventors
+      .map(inv => {
+        if (typeof inv === 'string') return inv.trim();
+        if (inv && typeof inv === 'object') {
+          return getExtractValue(inv.name, inv.fullName, inv.full_name, inv.inventorName, inv.inventor_name) || '';
+        }
+        return '';
+      })
+      .filter(name => name !== '');
+
+    if (extractedNames.length > 0) {
+      newInventors = extractedNames;
+      while (newInventors.length < 3) {
+        newInventors.push('');
+      }
+    }
+  }
+
+  return {
+    collegeName,
+    houseNo,
+    street,
+    city,
+    state,
+    country,
+    pincode,
+    principalName,
+    telephone,
+    mobile,
+    fax,
+    email,
+    inventors: newInventors
+  };
+};
+
 function App() {
   // Unified single source of truth for all form inputs
   const [formData, setFormData] = useState({
@@ -65,30 +261,36 @@ function App() {
         country: 'India'
       }));
 
-    setParsedData(prev => ({
-      ...(baseParsedData || prev || {}),
-      applicant: {
-        name: currentFormData.collegeName || '',
-        email: currentFormData.email || '',
-        address: {
-          houseNo: currentFormData.houseNo || '',
-          street: currentFormData.street || '',
-          city: currentFormData.city || '',
-          state: currentFormData.state || '',
-          country: currentFormData.country || '',
-          pincode: currentFormData.pincode || ''
-        }
-      },
-      principal: {
-        name: currentFormData.principalName || '',
-        designation: 'Principal',
-        telephone: currentFormData.telephone || '',
-        mobile: currentFormData.mobile || '',
-        fax: currentFormData.fax || '',
-        email: currentFormData.email || ''
-      },
-      inventors: activeInventors
-    }));
+    setParsedData(prev => {
+      const base = baseParsedData || prev || {};
+      return {
+        ...base,
+        applicant: {
+          ...(base.applicant || {}),
+          name: currentFormData.collegeName || (base.applicant && base.applicant.name) || '',
+          email: currentFormData.email || (base.applicant && base.applicant.email) || '',
+          address: {
+            ...((base.applicant && base.applicant.address) || {}),
+            houseNo: currentFormData.houseNo || '',
+            street: currentFormData.street || '',
+            city: currentFormData.city || '',
+            state: currentFormData.state || '',
+            country: currentFormData.country || '',
+            pincode: currentFormData.pincode || ''
+          }
+        },
+        principal: {
+          ...(base.principal || {}),
+          name: currentFormData.principalName || (base.principal && base.principal.name) || '',
+          designation: 'Principal',
+          telephone: currentFormData.telephone || (base.principal && base.principal.telephone) || '',
+          mobile: currentFormData.mobile || (base.principal && base.principal.mobile) || '',
+          fax: currentFormData.fax || (base.principal && base.principal.fax) || '',
+          email: currentFormData.email || (base.principal && base.principal.email) || ''
+        },
+        inventors: activeInventors.length > 0 ? activeInventors : (base.inventors || [])
+      };
+    });
   };
 
   const handleFormFieldChange = (fieldName, value) => {
