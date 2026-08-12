@@ -28,7 +28,7 @@ public class Form3GeneratorService {
             data = new PatentFormResponse();
         }
 
-        try (InputStream is = getTemplateInputStream("FORM3MAIN.docx");
+        try (InputStream is = getTemplateInputStream("Form3MAIN.docx");
                 XWPFDocument document = new XWPFDocument(is)) {
 
             Map<String, String> replacements = buildReplacementsMap(data);
@@ -280,19 +280,20 @@ public class Form3GeneratorService {
     }
 
     private InputStream getTemplateInputStream(String filename) throws Exception {
+        try {
+            InputStream is = new ClassPathResource(filename).getInputStream();
+            if (is != null) return is;
+        } catch (Exception ignored) {}
+
         InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(filename);
-        if (is == null) {
-            is = Form3GeneratorService.class.getClassLoader().getResourceAsStream(filename);
-        }
-        if (is == null) {
-            ClassPathResource cpr = new ClassPathResource(filename);
-            if (cpr.exists()) {
-                is = cpr.getInputStream();
-            }
-        }
-        if (is == null) {
-            throw new java.io.FileNotFoundException("Template file not found on classpath: " + filename);
-        }
-        return is;
+        if (is != null) return is;
+
+        is = Form3GeneratorService.class.getClassLoader().getResourceAsStream(filename);
+        if (is != null) return is;
+
+        is = Form3GeneratorService.class.getResourceAsStream("/" + filename);
+        if (is != null) return is;
+
+        throw new java.io.FileNotFoundException("Template file not found on classpath: " + filename);
     }
 }
