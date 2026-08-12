@@ -6,6 +6,7 @@ import PatentFormsCard from './components/PatentFormsCard';
 import AdditionalDetailsCard from './components/AdditionalDetailsCard';
 import PrincipalDetailsCard from './components/PrincipalDetailsCard';
 import InventorsCard from './components/InventorsCard';
+import { getApiBaseUrl, fetchWithRetry } from './utils/apiConfig';
 
 function App() {
   // Unified single source of truth for all form inputs
@@ -149,6 +150,7 @@ function App() {
     setIsDownloading(true);
 
     try {
+      const baseUrl = getApiBaseUrl();
       for (const formKey of selectedForms) {
         const payloadData = new FormData();
         payloadData.append('data', JSON.stringify(parsedData || {}));
@@ -156,16 +158,14 @@ function App() {
           payloadData.append('sourceFile', sourceFile);
         }
         
-        const rawBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-        const baseUrl = rawBaseUrl.replace(/\/+$/, '');
-        const response = await fetch(`${baseUrl}/api/patent/download?formType=${formKey}`, {
+        const response = await fetchWithRetry(`${baseUrl}/api/patent/download?formType=${formKey}`, {
           method: 'POST',
           body: payloadData,
         });
 
         if (!response.ok) {
           const errText = await response.text().catch(() => '');
-          throw new Error(`Download failed (${response.status}): ${errText || response.statusText}`);
+          throw new Error(`Download failed (${response.status}): ${errText || response.statusText || 'Server error'}`);
         }
 
         const blob = await response.blob();
@@ -195,7 +195,7 @@ function App() {
       }
     } catch (error) {
       console.error("Download Error: ", error);
-      alert('An error occurred while downloading.');
+      alert(`Download failed: ${error.message || 'Connecting to backend failed. Please check network connection or backend server status.'}`);
     } finally {
       setIsDownloading(false);
     }

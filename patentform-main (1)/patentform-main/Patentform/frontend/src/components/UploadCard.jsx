@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { UploadCloud, FolderOpen, File, CheckCircle, X, Loader2 } from 'lucide-react';
+import { getApiBaseUrl, fetchWithRetry } from '../utils/apiConfig';
 
 function UploadCard({ onDataParsed }) {
   const [isDragging, setIsDragging] = useState(false);
@@ -75,15 +76,14 @@ function UploadCard({ onDataParsed }) {
       const formData = new FormData();
       formData.append('file', uploadedFile);
 
-      const rawBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-      const baseUrl = rawBaseUrl.replace(/\/+$/, '');
-      const parseResponse = await fetch(`${baseUrl}/api/patent/parse`, {
+      const baseUrl = getApiBaseUrl();
+      const parseResponse = await fetchWithRetry(`${baseUrl}/api/patent/parse`, {
         method: 'POST',
         body: formData,
       });
 
       if (!parseResponse.ok) {
-        throw new Error('Server error while parsing document contents.');
+        throw new Error(`Server returned status ${parseResponse.status} while parsing document contents.`);
       }
 
       const parsedResponseData = await parseResponse.json();
@@ -94,7 +94,7 @@ function UploadCard({ onDataParsed }) {
 
     } catch (error) {
       console.error('Parsing pipeline error:', error);
-      alert('An error occurred during extraction. Check if backend is running.');
+      alert(`An error occurred during extraction: ${error.message || 'Check network connection or backend server status.'}`);
     } finally {
       setIsGenerating(false);
     }

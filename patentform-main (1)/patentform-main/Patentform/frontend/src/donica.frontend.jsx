@@ -19,21 +19,11 @@ function App() {
       return;
     }
 
-    // Temporary Safeguard: Alert if they chose forms you haven't coded in the backend yet
-    const hasUnimplementedForms = selectedForms.some(formId => formId !== 'form1');
-    if (hasUnimplementedForms && selectedForms.includes('form1')) {
-      alert("Note: Future forms are selected, but only Form 1 will be generated for now since the backend supports Form 1.");
-    } else if (hasUnimplementedForms && !selectedForms.includes('form1')) {
-      alert("Backend for these forms is not implemented yet! Please select Form Page 1.");
-      return;
-    }
-
     setIsDownloading(true);
 
     try {
-      const rawBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-      const baseUrl = rawBaseUrl.replace(/\/+$/, '');
-      const downloadResponse = await fetch(`${baseUrl}/api/patent/download`, {
+      const baseUrl = getApiBaseUrl();
+      const downloadResponse = await fetchWithRetry(`${baseUrl}/api/patent/download`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -42,7 +32,7 @@ function App() {
         }),
       });
 
-      if (!downloadResponse.ok) throw new Error('Server error during document creation.');
+      if (!downloadResponse.ok) throw new Error(`Server returned status ${downloadResponse.status} during document creation.`);
 
       const blob = await downloadResponse.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
@@ -61,7 +51,7 @@ function App() {
       window.URL.revokeObjectURL(downloadUrl);
     } catch (error) {
       console.error(error);
-      alert('An error occurred while downloading.');
+      alert(`Download failed: ${error.message || 'Connecting to backend failed. Please check network connection or backend server status.'}`);
     } finally {
       setIsDownloading(false);
     }
