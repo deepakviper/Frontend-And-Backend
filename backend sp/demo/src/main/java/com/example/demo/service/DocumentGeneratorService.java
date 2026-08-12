@@ -142,12 +142,18 @@ public class DocumentGeneratorService {
 
     public byte[] generateFilledForm1(PatentFormResponse data) throws Exception {
 
+        if (data == null) {
+            data = new PatentFormResponse();
+        }
+
         System.out.println("📥 BACKEND RECEIVED INVENTORS: " +
                 (data.getInventors() != null ? data.getInventors().size() : 0));
         if (data.getInventors() != null) {
             for (int i = 0; i < data.getInventors().size(); i++) {
-                System.out.println("📥 INVENTOR " + (i + 1) + ": " +
-                        data.getInventors().get(i).getName());
+                PatentFormResponse.InventorDTO inv = data.getInventors().get(i);
+                if (inv != null) {
+                    System.out.println("📥 INVENTOR " + (i + 1) + ": " + inv.getName());
+                }
             }
         }
         try (InputStream is = getTemplateInputStream("FORM1mai.docx");

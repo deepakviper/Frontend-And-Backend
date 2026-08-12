@@ -24,6 +24,10 @@ public class Form3GeneratorService {
 
     public byte[] generateForm3(PatentFormResponse data) {
 
+        if (data == null) {
+            data = new PatentFormResponse();
+        }
+
         try (InputStream is = getTemplateInputStream("FORM3MAIN.docx");
                 XWPFDocument document = new XWPFDocument(is)) {
 
@@ -103,7 +107,7 @@ public class Form3GeneratorService {
         map.put("{college_name}", clgName);
 
         // 4. {COLLEGE_NAME} - UPPERCASE for the Assignee section
-        map.put("{COLLEGE_NAME}", clgName.toUpperCase());
+        map.put("{COLLEGE_NAME}", clgName != null ? clgName.toUpperCase() : "");
 
         // 5. {address} - Multi-line formatted address
         map.put("{address}", buildMultiLineAddress(data));

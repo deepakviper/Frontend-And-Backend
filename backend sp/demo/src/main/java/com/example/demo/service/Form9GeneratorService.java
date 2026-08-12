@@ -20,6 +20,10 @@ public class Form9GeneratorService {
 
     public byte[] generateForm9(PatentFormResponse data) {
 
+        if (data == null) {
+            data = new PatentFormResponse();
+        }
+
         System.out.println("========== FORM 9 GENERATE DEBUG ==========");
         System.out.println("Principal: " + (data.getPrincipal() != null ? data.getPrincipal().getName() : "NULL"));
         System.out.println("Inventors count: " + (data.getInventors() != null ? data.getInventors().size() : 0));

@@ -24,6 +24,10 @@ public class Form28GeneratorService {
 
     public byte[] generateForm28(PatentFormResponse data) {
 
+        if (data == null) {
+            data = new PatentFormResponse();
+        }
+
         try (InputStream is = getTemplateInputStream("form28MAIN2.docx");
                 XWPFDocument document = new XWPFDocument(is)) {
 
