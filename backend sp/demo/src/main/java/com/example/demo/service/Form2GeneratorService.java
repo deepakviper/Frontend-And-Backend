@@ -163,9 +163,7 @@ public class Form2GeneratorService {
         // ---- Now insert them into target ----
 
         // Preamble: "I/We Claim,"
-        String preamble = (data.getInventors() != null && data.getInventors().size() > 1)
-                ? "We Claim,"
-                : "I/We Claim,";
+        String preamble = "I/We Claim,";
 
         insertParagraph(targetDoc, targetPlaceholder, preamble, true, false, 12);
         insertParagraph(targetDoc, targetPlaceholder, "", false, false, 11);
