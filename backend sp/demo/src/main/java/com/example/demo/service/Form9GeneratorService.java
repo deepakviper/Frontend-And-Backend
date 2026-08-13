@@ -120,6 +120,10 @@ public class Form9GeneratorService {
         map.put("{{SERVICE_FAX}}", principalFax);
         map.put("{{SERVICE_EMAIL}}", principalEmail);
 
+        String appName = (data.getApplicant() != null && notBlank(data.getApplicant().getName())) ? data.getApplicant().getName() : principalName;
+        map.put("{{APP_NAME}}", appName);
+        map.put("{{APPLICANT_NAME}}", appName);
+
         // 6. Inventor names — VERTICAL (each on new line) for table
         if (data.getInventors() != null && !data.getInventors().isEmpty()) {
             StringBuilder verticalNames = new StringBuilder();
